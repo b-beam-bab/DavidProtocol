@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "./interfaces/IDepositContract";
-import "./StakingModuleManager";
+import "./interfaces/IDepositContract.sol";
+import "./interfaces/IStakingModuleManager.sol";
 
 contract StakingModule {
     IDepositContract public immutable depositContract;
@@ -10,7 +10,7 @@ contract StakingModule {
 
     constructor(
         IDepositContract _depositContract,
-        IStakingModuleManager stakingModuleManager
+        IStakingModuleManager _stakingModuleManager
     ) {
         depositContract = _depositContract;
         stakingModuleManager = _stakingModuleManager;
@@ -21,6 +21,7 @@ contract StakingModule {
             msg.sender == stakingModuleManager,
             "StakigModule::onlyStakingModuleManager - Invalid caller"
         );
+        _;
     }
 
     function stake(
@@ -39,9 +40,8 @@ contract StakingModule {
         );
     }
 
-    function createWithdrawal() {}
-
-    function completeWithdrawal() {}
+    function createWithdrawal() external {}
+    function completeWithdrawal() external {}
 
     function _getWithdrawalCredentials() internal view returns (bytes memory) {
         return abi.encodePacked(bytes1(uint8(1)), bytes11(0), address(this));

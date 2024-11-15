@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
-import "./interfaces/IStakigModule";
+import "./IStakigModule.sol";
 
-interface StakingModuleManager {
+interface IStakingModuleManager {
     function stake(
         bytes calldata pubkey,
         bytes calldata signature,
@@ -11,6 +11,6 @@ interface StakingModuleManager {
     ) external payable;
 
     function _createStakingModule() internal returns (IStakingModule);
-    function createWithdrawal();
-    function completeWithdrawal();
+    function createWithdrawal() external;
+    function completeWithdrawal() external;
 }

@@ -25,12 +25,13 @@ contract StakingModuleManager {
         if (address(stakingModule) == address(0)) {
             stakingModule = _createStakingModule();
             stakingModules[msg.sender] = stakingModule;
-            stakingModule.stake{value: msg.value}(
-                pubkey,
-                signature,
-                depositDataRoot
-            );
         }
+
+        stakingModule.stake{value: msg.value}(
+            pubkey,
+            signature,
+            depositDataRoot
+        );
     }
 
     function _createStakingModule() internal returns (IStakingModule) {

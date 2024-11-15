@@ -10,7 +10,7 @@ import "./StakingModule.sol";
 
 contract StakingModuleManager {
     IDepositContract public immutable depositContract;
-    mapping(address => IStakingModule) public stakingModules;
+    mapping(bytes32 => IStakingModule) public stakingModules;
 
     constructor(IDepositContract _depositContract) {
         depositContract = _depositContract;
@@ -21,10 +21,12 @@ contract StakingModuleManager {
         bytes calldata signature,
         bytes32 depositDataRoot
     ) external payable {
-        IStakingModule stakingModule = stakingModules[msg.sender];
+        // Even if the EOA address is the same, cases with different pubkeys are distinguished.
+        bytes32 key = keccak256(abi.encodePacked(msg.sender, pubkey));
+        IStakingModule stakingModule = stakingModules[key];
         if (address(stakingModule) == address(0)) {
             stakingModule = _createStakingModule();
-            stakingModules[msg.sender] = stakingModule;
+            stakingModules[key] = stakingModule;
         }
 
         stakingModule.stake{value: msg.value}(

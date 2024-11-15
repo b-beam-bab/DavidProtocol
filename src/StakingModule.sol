@@ -7,15 +7,17 @@ import "./interfaces/IStakingModuleManager.sol";
 contract StakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
-
+    address public immutable owner;
     uint256 private _balance;
 
     constructor(
         IDepositContract _depositContract,
-        IStakingModuleManager _stakingModuleManager
+        IStakingModuleManager _stakingModuleManager,
+        address _owner
     ) {
         depositContract = _depositContract;
         stakingModuleManager = _stakingModuleManager;
+        owner = _owner;
     }
 
     modifier onlyStakingModuleManager() {

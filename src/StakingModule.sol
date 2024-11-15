@@ -18,7 +18,7 @@ contract StakingModule {
 
     modifier onlyStakingModuleManager() {
         require(
-            msg.sender == stakingModuleManager,
+            msg.sender == address(stakingModuleManager),
             "StakigModule::onlyStakingModuleManager - Invalid caller"
         );
         _;
@@ -31,7 +31,7 @@ contract StakingModule {
     ) external payable onlyStakingModuleManager {
         require(msg.value == 32 ether, "Invalid staking amount");
 
-        bytes wc = _getWithdrawalCredentials();
+        bytes memory wc = _getWithdrawalCredentials();
         depositContract.deposit{value: 32 ether}(
             pubkey,
             wc,

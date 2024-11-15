@@ -4,7 +4,9 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/utils/Create2.sol";
 
 import "./interfaces/IDepositContract.sol";
-import "./interfaces/IStakigModule.sol";
+import "./interfaces/IStakingModule.sol";
+
+import "./StakingModule.sol";
 
 contract StakingModuleManager {
     IDepositContract public immutable depositContract;
@@ -23,7 +25,7 @@ contract StakingModuleManager {
         if (address(stakingModule) == address(0)) {
             stakingModule = _createStakingModule();
             stakingModules[msg.sender] = stakingModule;
-            stakingModule.stake{value: msg.value}.stake(
+            stakingModule.stake{value: msg.value}(
                 pubkey,
                 signature,
                 depositDataRoot
@@ -37,7 +39,7 @@ contract StakingModuleManager {
                 0,
                 bytes32(uint256(uint160(msg.sender))),
                 abi.encodePacked(
-                    type(IStakingModule).creationCode,
+                    type(StakingModule).creationCode,
                     abi.encode(depositContract, address(this))
                 )
             )

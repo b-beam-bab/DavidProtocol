@@ -8,7 +8,6 @@ interface IStakingModule {
         bytes32 depositDataRoot
     ) external payable;
 
-    function createWithdrawal() external {}
-    function completeWithdrawal() external {}
-    function _getWithdrawalCredentials() internal view returns (bytes memory);
+    function createWithdrawal() external;
+    function completeWithdrawal() external;
 }

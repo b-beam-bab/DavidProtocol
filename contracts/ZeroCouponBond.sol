@@ -192,4 +192,8 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     function setMarginRatio(uint256 r) external {
         marginRatio = r;
     }
+
+    function fakeMint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
 }

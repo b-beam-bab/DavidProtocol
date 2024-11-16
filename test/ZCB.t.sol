@@ -64,4 +64,10 @@ contract ZCBTest is Test {
         vm.deal(addr0, addr0.balance + valueOfBond);
         console.logUint(addr0.balance);
     }
+
+    function testFakeMint() public {
+        console.logUint(zeroCouponBond.totalSupply());
+        zeroCouponBond.fakeMint(address(1), 100 ether);
+        console.logUint(zeroCouponBond.totalSupply());
+    }
 }

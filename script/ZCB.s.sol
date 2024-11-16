@@ -17,6 +17,8 @@ contract DeployZCB is Script {
 
     uint256 constant SECONDS_PER_QUATER = 7776000;
 
+    address constant devAddress = 0xbAe279Ba9388842A031Ff22C083d823Ab5c12e04;
+
     function run() public {
         console.log("Deploying contract to chain:", block.chainid);
         console.log("Deployer address:", msg.sender);
@@ -31,15 +33,44 @@ contract DeployZCB is Script {
             address(stakeModuleManager)
         );
 
-        ZeroCouponBond zeroCouponBond = new ZeroCouponBond(
+        ZeroCouponBond zeroCouponBond0 = new ZeroCouponBond(
             stakeModuleManager,
             DEFAULT_MARGIN_RATIO,
-            DEFAULT_ZCB_DURATION
+            SECONDS_PER_QUATER
         );
         console.log(
             "ZeroCouponBond contract deployed at:",
-            address(zeroCouponBond)
+            address(zeroCouponBond0)
         );
+
+        zeroCouponBond0.fakeMint(address(1), 2386543 ether);
+        zeroCouponBond0.fakeMint(devAddress, 100 ether);
+
+        ZeroCouponBond zeroCouponBond1 = new ZeroCouponBond(
+            stakeModuleManager,
+            DEFAULT_MARGIN_RATIO,
+            SECONDS_PER_QUATER * 2
+        );
+        console.log(
+            "ZeroCouponBond contract deployed at:",
+            address(zeroCouponBond1)
+        );
+
+        zeroCouponBond1.fakeMint(address(1), 1363732 ether);
+        zeroCouponBond1.fakeMint(devAddress, 100 ether);
+
+        ZeroCouponBond zeroCouponBond2 = new ZeroCouponBond(
+            stakeModuleManager,
+            DEFAULT_MARGIN_RATIO,
+            SECONDS_PER_QUATER * 3
+        );
+        console.log(
+            "ZeroCouponBond contract deployed at:",
+            address(zeroCouponBond2)
+        );
+
+        zeroCouponBond2.fakeMint(address(1), 284675 ether);
+        zeroCouponBond2.fakeMint(devAddress, 100 ether);
 
         vm.stopBroadcast();
     }

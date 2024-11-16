@@ -5,7 +5,7 @@ import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
 import { useAccount } from "wagmi";
 import Onboarding from "./components/onboarding";
 import Operator from "./components/operator";
-import { Investor } from "./components/investor";
+import Investor from "./components/investor";
 
 export default function Dashboard() {
   const account = useAccount();

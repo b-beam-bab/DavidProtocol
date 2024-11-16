@@ -47,7 +47,7 @@ contract StakingModule is IStakingModule {
         // Note
         // 1. Due to issues in the development environment, we adjusted the scale of deposit amounts.
         // 2. We modified the conditions to allow for more flexible deposit amounts, considering the Pectra upgrade.
-        require(msg.value >= 1 ether, "Invalid staking amount");
+        require(msg.value > 0, "Invalid staking amount");
 
         // Note
         // 1. Due to a delay in reflecting the validator’s deposit details, we replace this part to balance update.

@@ -9,6 +9,15 @@ const nextConfig = {
   env: {
     ALCHEMY_API_KEY: process.env.ALCHEMY_API_KEY,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "dynamic-assets.coinbase.com",
+        port: "",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

@@ -94,7 +94,7 @@ const BondTableRow = ({ bond }: BondTableRowProps) => {
     <TableRow
       key={bond.id}
       className="cursor-pointer transition-colors hover:bg-accent/50"
-      onClick={() => (window.location.href = `/delegate/${bond.maturityDate}`)}
+      onClick={() => (window.location.href = `/market/${bond.maturityDate}`)}
     >
       <TableCell>
         <div className="font-medium">{bond.name}</div>

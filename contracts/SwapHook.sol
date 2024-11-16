@@ -32,6 +32,7 @@ contract SwapHook is BaseHook {
 
     error AddLiquidityDirectToHook();
 
+    uint256 internal constant DAY = 86400;
     uint256 internal constant IMPLIED_RATE_TIME = 365 * DAY;
     int256 internal constant MAX_MARKET_PROPORTION = (1e18 * 96) / 100;
 
@@ -45,7 +46,7 @@ contract SwapHook is BaseHook {
     {
         return
             Hooks.Permissions({
-                beforeInitialize: true, // true
+                beforeInitialize: false,
                 afterInitialize: false,
                 beforeAddLiquidity: true, // true
                 afterAddLiquidity: false,
@@ -71,20 +72,11 @@ contract SwapHook is BaseHook {
         HookState storage hs = _pools[poolId];
     }
 
-    function beforeInitialize(
-        address,
-        PoolKey calldata key,
-        uint160 sqrtPriceX96
-    ) external override returns (bytes4) {
-        // TODO IMPLEMENT
-        return BaseHook.beforeInitialize.selector;
-    }
-
     function beforeAddLiquidity(
-        address sender,
-        PoolKey calldata key,
-        IPoolManager.ModifyLiquidityParams calldata params,
-        bytes calldata hookData
+        address,
+        PoolKey calldata,
+        IPoolManager.ModifyLiquidityParams calldata,
+        bytes calldata
     ) external override returns (bytes4) {
         revert AddLiquidityDirectToHook();
     }
@@ -106,9 +98,10 @@ contract SwapHook is BaseHook {
             ? -swapParams.amountSpecified
             : swapParams.amountSpecified;
         int256 unspecifiedAmount;
+        int256 fee;
         BeforeSwapDelta returnDelta;
         if (exactInput) {
-            unspecifiedAmount = _swap(
+            (unspecifiedAmount, fee) = _swap(
                 hs,
                 specified,
                 unspecified,
@@ -121,7 +114,7 @@ contract SwapHook is BaseHook {
             );
         } else {
             // TODO FIX IT
-            unspecifiedAmount = _swap(
+            (unspecifiedAmount, fee) = _swap(
                 hs,
                 specified,
                 unspecified,
@@ -166,7 +159,6 @@ contract SwapHook is BaseHook {
         ); // 거래전 교환비율 계산
 
         int256 assetToAccount = -((amount * 1e18) / exchangeRate); // ETH 이동량
-        int256 fee;
         // calculate fee
         if (amount > 0) {
             // case of buy zct
@@ -180,9 +172,7 @@ contract SwapHook is BaseHook {
         netAssetToAccount = assetToAccount - fee;
 
         state.totalZct = state.totalZct - amount;
-        state.totalAsset =
-            state.totalAsset -
-            (netEthToAccount + netEthToReserve);
+        state.totalAsset = state.totalAsset - netAssetToAccount;
 
         state.lastLnImpliedRate = _getLnImpliedRate(
             state.totalZct,
@@ -259,7 +249,9 @@ contract SwapHook is BaseHook {
         int256 scalarRoot,
         uint256 timeToExpiry
     ) internal pure returns (int256 rateScalar) {
-        rateScalar = (scalarRoot * IMPLIED_RATE_TIME) / timeToExpiry;
+        rateScalar =
+            (scalarRoot * int256(IMPLIED_RATE_TIME)) /
+            int256(timeToExpiry);
         require(rateScalar > 0, "rateScalar must be positive");
     }
 

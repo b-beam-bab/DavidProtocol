@@ -65,6 +65,11 @@ contract StakingModule is IStakingModule {
         _totalLockedBalance += amount;
     }
 
+    // Note
+    // This function essentially serves the same purpose as creating a withdrawal request.
+    // According to the current specifications, only full withdrawals are allowed, so specifying a partial amount is not possible.
+    // However, in this implementation, we have accounted for the spec of Pectra, allowing this parameter to be set.
+    // We expect that there will be no compatibility issues with the current spec(dencun) in this implementation.
     function _unlockBalance(address recipent, uint256 amount) internal {
         uint256 lockedBalance = _lockedBalances[recipent];
         require(
@@ -78,6 +83,11 @@ contract StakingModule is IStakingModule {
         _withdrawableBalances[recipent] += amount;
     }
 
+    // Note
+    // For the convenience of temporary implementation, the current setup assumes one validator per withdrawal address.
+    // While this approach may be inefficient under the current spec(dencun),
+    //  it is an area that can be significantly optimized by referencing examples from other protocols.
+    // If the Pectra spec are applied, this implementation is expected to sufficiently replace the existing structure.
     function mintBond(
         IZeroCouponBond zcbContract,
         uint256 amount
@@ -90,6 +100,9 @@ contract StakingModule is IStakingModule {
         _lockedBalances[address(zcbContract)] += amount;
     }
 
+    // Note
+    // This function essentially represents the creation of a withdrawal request.
+    // While it actually operates asynchronously, for convenience, this part is substituted with a state update.
     function createWithdrawal(uint256 amount) external {
         require(amount > 0, "Invalid amount");
         _unlockBalance(msg.sender, amount);

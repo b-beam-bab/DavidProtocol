@@ -9,7 +9,4 @@ interface IStakingModuleManager {
         bytes calldata signature,
         bytes32 depositDataRoot
     ) external payable;
-
-    function createWithdrawal() external;
-    function completeWithdrawal() external;
 }

@@ -151,10 +151,6 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         }
     }
 
-    function getFaceValue() external view returns (uint256) {}
-    function getMaturityDate() external view returns (uint256) {}
-    function getIssuerBalance(address issuer) external view returns (uint256) {}
-
     function verifyPenalty(
         bytes calldata proof
     ) internal pure returns (uint256) {

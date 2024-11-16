@@ -50,7 +50,4 @@ contract StakingModuleManager is IStakingModuleManager {
         );
         return stakingModule;
     }
-
-    function createWithdrawal() external {}
-    function completeWithdrawal() external {}
 }

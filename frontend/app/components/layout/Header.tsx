@@ -90,5 +90,5 @@ const navigation = [
   { name: "Home", href: "/" },
   { name: "Dashboard", href: "/dashboard" },
   { name: "Market", href: "/market" },
-  { name: "Operator", href: "/operator" },
+  { name: "Validator", href: "/validator" },
 ];

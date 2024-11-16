@@ -11,7 +11,7 @@ import {
 import { AddDepositDialog } from "@/components/dialog/add-deposit-dialog";
 import { IssueBondDialog } from "@/components/dialog/issue-bond-dialog";
 
-export default function OperatorPage() {
+export default function ValidatorPage() {
   const deposit = 20;
   const availableDeposit = 10;
 

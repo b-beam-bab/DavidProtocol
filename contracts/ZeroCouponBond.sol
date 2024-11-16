@@ -7,13 +7,13 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IZeroCouponBond.sol";
 
-interface PendingWithdrawal {
+struct PendingWithdrawal {
     address withdrawalCredential;
     uint256 amountToWithdraw;
     uint256 amountToLiquidate;
 }
 
-interface IssuerInfo {
+struct IssuerInfo {
     uint256 principal;
     uint256 collateral;
     uint256 margin;
@@ -27,7 +27,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     uint256 public marginRatio;
     uint256 public maturity;
 
-    mapping(address => IssuerInfo) issuers;
+    mapping(address => IssuerInfo) private issuers;
 
     uint256 pendingWithdrawalsHead;
     uint256 pendingWithdrawalsTail;
@@ -73,7 +73,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         Address.sendValue(payable(msg.sender), bondBalance);
     }
 
-    function earlyRepayment() external notExpired {
+    function earlyRepayment() external payable notExpired {
         require(msg.value > 0, "Invalid value");
 
         require(issuers[msg.sender].collateral > 0, "No debt to repay");
@@ -96,7 +96,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         );
 
         uint256 penalty = verifyPenalty(proof);
-        IssuerInfo issuerInfo = issuers[validator];
+        IssuerInfo memory issuerInfo = issuers[validator];
 
         uint256 amountToWithdraw = issuerInfo.principal + issuerInfo.margin;
         uint256 amountToLiquidate = issuerInfo.collateral + penalty;
@@ -108,13 +108,13 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     function createWithdrawalRequest(
         address recipient,
         uint256 amountToWithdraw,
-        uint256 amountToRefund
+        uint256 amountToLiquidation
     ) internal {
         IStakingModule(recipient).createWithdrawal(amountToWithdraw);
-        PendingWithdrawal p = PendingWithdrawal(
+        PendingWithdrawal memory p = PendingWithdrawal(
             recipient,
             amountToWithdraw,
-            amountToRefund
+            amountToLiquidation
         );
         pendingWithdrawals[pendingWithdrawalsTail] = p;
         pendingWithdrawalsTail++;
@@ -132,7 +132,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
                 break;
             }
 
-            PendingWithdrawal p = pendingWithdrawals[pos];
+            PendingWithdrawal memory p = pendingWithdrawals[pos];
             IStakingModule(p.withdrawalCredential).completeWithdrawal();
 
             uint256 amountToRefund = p.amountToWithdraw - p.amountToLiquidate;
@@ -155,13 +155,17 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     function getMaturityDate() external view returns (uint256) {}
     function getIssuerBalance(address issuer) external view returns (uint256) {}
 
-    function verifyPenalty(bytes calldata proof) internal returns (uint256) {
+    function verifyPenalty(
+        bytes calldata proof
+    ) internal pure returns (uint256) {
         // TODO: Do something to verify proof and get value of penalty
         uint256 penalty = 0;
         return 0;
     }
 
-    function verifyLiquidation(bytes calldata proof) internal returns (bool) {
+    function verifyLiquidation(
+        bytes calldata proof
+    ) internal pure returns (bool) {
         // TODO: Do something to verify proof and check condition of liquidation
         return true;
     }

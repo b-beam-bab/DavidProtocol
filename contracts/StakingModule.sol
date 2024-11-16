@@ -8,7 +8,7 @@ import "./interfaces/IStakingModule.sol";
 import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IZeroCouponBond.sol";
 
-contract StakingModule {
+contract StakingModule is IStakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
     address public immutable owner;

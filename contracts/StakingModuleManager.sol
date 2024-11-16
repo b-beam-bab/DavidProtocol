@@ -40,7 +40,7 @@ contract StakingModuleManager is IStakingModuleManager {
     function getStakingModule(
         address owner,
         bytes calldata pubkey
-    ) view returns (address) {
+    ) external returns (address) {
         bytes32 key = _calculateKey(owner, pubkey);
 
         IStakingModule stakingModule = stakingModules[key];

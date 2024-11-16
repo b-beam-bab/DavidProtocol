@@ -13,5 +13,5 @@ interface IStakingModuleManager {
     function getStakingModule(
         address owner,
         bytes calldata pubkey
-    ) view returns (address);
+    ) external returns (address);
 }

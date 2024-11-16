@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { cache } from "react";
 
 const priceResponseSchema = z.object({
   data: z.array(
@@ -17,8 +16,7 @@ const priceResponseSchema = z.object({
   ),
 });
 
-export const getEthPrice = cache(async () => {
-  console.log(process.env.ALCHEMY_API_KEY);
+export async function GET() {
   try {
     const response = await fetch(
       "https://api.g.alchemy.com/prices/v1/tokens/by-symbol?symbols=ETH",
@@ -27,22 +25,23 @@ export const getEthPrice = cache(async () => {
           Authorization: `Bearer ${process.env.ALCHEMY_API_KEY}`,
           accept: "application/json",
         },
-        // Add cache control for production
-        next: {
-          revalidate: 60,
-        },
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch ETH price: ${response.statusText}`);
+      return Response.json(
+        { error: "Failed to fetch ETH price" },
+        { status: 500 }
+      );
     }
 
     const data = await response.json();
     const parsed = priceResponseSchema.parse(data);
-    return parseFloat(parsed.data[0].prices[0].value);
+    const price = parseFloat(parsed.data[0].prices[0].value);
+
+    return Response.json({ price });
   } catch (error) {
     console.error("Error fetching ETH price:", error);
-    throw error;
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
-});
+}

@@ -1,10 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getEthPrice } from "@/lib/price";
+import { useEthPrice } from "@/lib/hooks/use-eth-price";
 import { Wallet } from "lucide-react";
 
 export const BalanceChartCard = async () => {
   const currentBalance = 25;
-  const ethPrice = await getEthPrice();
+  const { data: price, isLoading } = useEthPrice();
 
   return (
     <Card className="min-h-[400px]">
@@ -15,9 +15,13 @@ export const BalanceChartCard = async () => {
       <CardContent>
         <div className="mb-4">
           <div className="text-2xl font-bold">{currentBalance} ETH</div>
-          <p className="text-sm text-muted-foreground">
-            ≈ ${currentBalance * ethPrice} USD
-          </p>
+          {isLoading || !price ? (
+            <p className="text-xs text-muted-foreground">Loading...</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              ≈ ${price * currentBalance} USD
+            </p>
+          )}
         </div>
         <div className="h-[250px] rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
           <p className="text-muted-foreground">

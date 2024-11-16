@@ -16,43 +16,62 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TransactionState } from "@/lib/types";
 import { ErrorIcon, SuccessIcon } from "../svg";
+import {
+  type BaseError,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import { STAKING_MODULE_MANAGER_ADDRESS } from "@/constants/contract";
+import { abi as smmAbi } from "@/abi/staking-module-manager";
+import { genRanHex } from "@/mock/validator";
+import { parseEther } from "viem";
 
 export function AddDepositDialog() {
   const [amount, setAmount] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
   const [txState, setTxState] = React.useState<TransactionState>("idle");
-  const [error, setError] = React.useState("");
 
-  // Simulate transaction - replace with actual blockchain transaction
-  const processDeposit = async () => {
-    setTxState("loading");
-    try {
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() > 0.2) {
-            resolve(true);
-          } else {
-            reject(new Error("Transaction failed"));
-          }
-        }, 2000);
-      });
+  const { data: hash, isPending, error, writeContract } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  React.useEffect(() => {
+    if (isPending || isConfirming) {
+      setTxState("loading");
+    } else if (isConfirmed) {
       setTxState("success");
-      // Reset after success
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         setIsOpen(false);
         setAmount("");
         setTxState("idle");
-      }, 2000);
-    } catch (err) {
+      }, 2000); // Added explicit timeout
+      return () => clearTimeout(timer); // Cleanup timeout
+    } else if (error) {
       setTxState("error");
-      setError(err instanceof Error ? err.message : "Transaction failed");
     }
-  };
+  }, [isPending, isConfirming, isConfirmed, error]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    processDeposit();
+
+    setTxState("loading");
+
+    const randomPubkey = "0x" as `0x${string}`;
+    const randomSig = `0x${genRanHex(64)}` as `0x${string}`;
+    const depositDataRoot = `0x${genRanHex(64)}` as `0x${string}`;
+
+    const valueInWei = parseEther(amount);
+
+    writeContract({
+      address: STAKING_MODULE_MANAGER_ADDRESS,
+      abi: smmAbi,
+      functionName: "stake",
+      args: [randomPubkey, randomSig, depositDataRoot],
+      value: valueInWei,
+    });
   };
 
   const renderContent = () => {
@@ -85,7 +104,9 @@ export function AddDepositDialog() {
             <div className="rounded-full bg-destructive/10 p-3">
               <ErrorIcon />
             </div>
-            <p className="text-center text-destructive">{error}</p>
+            <p className="text-center text-destructive">
+              {(error as BaseError).shortMessage || error?.message}
+            </p>
             <Button variant="outline" onClick={() => setTxState("idle")}>
               Try Again
             </Button>
@@ -104,7 +125,7 @@ export function AddDepositDialog() {
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   min="0"
-                  step="0.1"
+                  step="0.01"
                   required
                 />
                 <span className="text-sm font-medium">ETH</span>

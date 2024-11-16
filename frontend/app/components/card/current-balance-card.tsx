@@ -1,15 +1,13 @@
 import { CircleDollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { getEthPrice } from "@/lib/price";
+import { useEthPrice } from "@/lib/hooks/use-eth-price";
 
 type CurrentBalanceCardProps = {
   totalEth: number;
 };
 
-export const CurrentBalanceCard = async ({
-  totalEth,
-}: CurrentBalanceCardProps) => {
-  const price = await getEthPrice();
+export const CurrentBalanceCard = ({ totalEth }: CurrentBalanceCardProps) => {
+  const { data: price, isLoading } = useEthPrice();
 
   return (
     <Card>
@@ -19,9 +17,13 @@ export const CurrentBalanceCard = async ({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{totalEth} ETH</div>
-        <p className="text-xs text-muted-foreground">
-          ≈ ${price * totalEth} USD
-        </p>
+        {isLoading || !price ? (
+          <p className="text-xs text-muted-foreground">Loading...</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            ≈ ${price * totalEth} USD
+          </p>
+        )}
       </CardContent>
     </Card>
   );

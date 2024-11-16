@@ -11,7 +11,6 @@ import { MOCK_ISSUED_BONDS } from "@/mock/bond";
 
 export default function ValidatorPage() {
   const totalEthBalance = 30;
-  const deposit = 20;
   const availableDeposit = 10;
 
   return (
@@ -29,12 +28,8 @@ export default function ValidatorPage() {
       <div className="mx-auto pt-8 pb-[100px] px-[108px] bg-white">
         {/* Stats Cards */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <Suspense>
-            <CurrentBalanceCard totalEth={totalEthBalance} />
-          </Suspense>
-          <Suspense>
-            <TotalDepositCard totalDeposit={deposit} />
-          </Suspense>
+          <CurrentBalanceCard totalEth={totalEthBalance} />
+          <TotalDepositCard />
           <APYCard />
         </div>
 

@@ -6,16 +6,16 @@ import "forge-std/console.sol";
 import {Script} from "forge-std/Script.sol";
 
 import {IDepositContract} from "../contracts/interfaces/IDepositContract.sol";
-import {FakeOracle} from "../contracts/FakeOracle.sol";
 import {StakingModuleManager} from "../contracts/StakingModuleManager.sol";
 import {ZeroCouponBond} from "../contracts/ZeroCouponBond.sol";
 
 contract DeployZCB is Script {
-    uint256 constant FAKE_AVERAGE_YIELD = 3 * 1e18;
     IDepositContract depositContract = IDepositContract(address(0));
 
     uint256 constant DEFAULT_MARGIN_RATIO = 100;
     uint256 constant DEFAULT_ZCB_DURATION = 60;
+
+    uint256 constant SECONDS_PER_QUATER = 7776000;
 
     function run() public {
         console.log("Deploying contract to chain:", block.chainid);

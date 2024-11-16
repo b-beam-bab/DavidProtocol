@@ -25,6 +25,7 @@ import {IERC20} from "forge-std/interfaces/IERC20.sol";
 import {IPositionDescriptor} from "v4-periphery/src/interfaces/IPositionDescriptor.sol";
 import {IWETH9} from "v4-periphery/src/interfaces/external/IWETH9.sol";
 
+import {FakeOracle} from "contracts/FakeOracle.sol";
 /// @notice Forge script for deploying v4 & hooks to **anvil**
 /// @dev This script only works on an anvil RPC because v4 exceeds bytecode limits
 contract CounterScript is Script, DeployPermit2 {
@@ -38,6 +39,8 @@ contract CounterScript is Script, DeployPermit2 {
     function run() public {
         vm.broadcast();
         IPoolManager manager = deployPoolManager();
+        // FakeOracle oracle = new FakeOracle(30);
+        // console.log(address(oracle));
 
         // hook contracts must have specific flags encoded in the address
         uint160 permissions = uint160(
@@ -182,7 +185,8 @@ contract CounterScript is Script, DeployPermit2 {
             600000000000000,
             30,
             1,
-            block.timestamp + 10000
+            block.timestamp + 10000,
+            address(token0)
         );
 
         // approve the tokens to the routers

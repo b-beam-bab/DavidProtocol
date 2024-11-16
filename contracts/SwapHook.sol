@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+import "forge-std/Script.sol";
 
 import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
@@ -24,6 +25,7 @@ contract SwapHook is BaseHook {
         int256 totalLiquidity;
         int256 scalarRoot;
         int256 initialAnchor;
+        uint256 latestAverageYield;
         uint256 expiry;
         uint256 lnFeeRateRoot;
         uint256 lastLnImpliedRate;
@@ -32,6 +34,8 @@ contract SwapHook is BaseHook {
     using PoolIdLibrary for PoolKey;
 
     mapping(PoolId id => HookState) internal _pools;
+    mapping(address => bool) internal _zcts;
+    // IFakeOracle public oracle;
 
     error AddLiquidityDirectToHook();
 
@@ -73,7 +77,8 @@ contract SwapHook is BaseHook {
         int256 scalarRoot,
         int256 initialAnchor,
         uint80 lnFeeRateRoot,
-        uint256 expiry
+        uint256 expiry,
+        address zct
     ) external {
         PoolId poolId = key.toId();
         HookState storage hs = _pools[poolId];
@@ -81,10 +86,11 @@ contract SwapHook is BaseHook {
         hs.lnFeeRateRoot = lnFeeRateRoot;
         hs.initialAnchor = initialAnchor;
         hs.expiry = expiry;
+        _zcts[zct] = true;
     }
 
-    function isZct(Currency currency) public pure returns (bool) {
-        return true;
+    function isZct(Currency currency) public returns (bool) {
+        return _zcts[Currency.unwrap(currency)];
     }
 
     function beforeAddLiquidity(
@@ -308,6 +314,10 @@ contract SwapHook is BaseHook {
     ) internal returns (int256 netAssetToAccount, int256 fee) {
         uint256 timeToExpiry = state.expiry - blockTime; // 만기까지 남은 시간
         int256 rateScalar = _getRateScalar(state.scalarRoot, timeToExpiry); // rateScalar 계산
+        // uint256 ay = oracle.averageYield();
+        // if (state.latestAverageYield != ay) {
+        //     state.latestAverageYield = ay;
+        // }
         int256 rateAnchor = _getRateAnchor(
             state.totalZct,
             state.totalAsset,

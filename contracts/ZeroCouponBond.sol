@@ -8,16 +8,18 @@ import "./interfaces/IZeroCouponBond.sol";
 
 contract ZeroCouponBond is ERC20, IZeroCouponBond {
     IStakingModuleManager public stakingModuleManager;
-    uint256 public collateralRatio;
+    uint256 public marginRatio;
     uint256 public maturityBlock;
+
+    mapping(address => uint256) margins;
 
     constructor(
         IStakingModuleManager _stakingModuleManager,
-        uint256 _collateralRatio,
+        uint256 _marginRatio,
         uint256 _duration
     ) ERC20("Zero Coupon Bond", "ZCB") {
         stakingModuleManager = _stakingModuleManager;
-        collateralRatio = _collateralRatio;
+        marginRatio = _marginRatio;
         maturityBlock = block.number + _duration;
     }
 
@@ -28,7 +30,9 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
 
     // TODO: Add modifier checking valid caller
     function mint(address to, uint256 amount) external notExpired {
-        _mint(to, amount);
+        uint256 margin = amount * marginRatio;
+        _mint(to, amount - margin);
+        margins[to] += margin;
     }
 
     function redeem(uint256 amount) external {}

@@ -23,9 +23,6 @@ contract DeployZCB is Script {
 
         vm.startBroadcast();
 
-        FakeOracle fakeOracle = new FakeOracle(FAKE_AVERAGE_YIELD);
-        console.log("FakeOracle contract deployed at:", address(fakeOracle));
-
         StakingModuleManager stakeModuleManager = new StakingModuleManager(
             depositContract
         );

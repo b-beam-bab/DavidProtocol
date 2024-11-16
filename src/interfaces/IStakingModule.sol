@@ -7,7 +7,7 @@ interface IStakingModule {
         bytes calldata signature,
         bytes32 depositDataRoot
     ) external payable;
-
+    function lockBalance(address recipent, uint256 amount) external;
     function createWithdrawal() external;
     function completeWithdrawal() external;
 }

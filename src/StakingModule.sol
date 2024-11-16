@@ -73,7 +73,7 @@ contract StakingModule {
         _totalBalance += msg.value;
     }
 
-    function lockBalance(address recipent, uint256 amount) public {
+    function lockBalance(address recipent, uint256 amount) external {
         require(
             amount <= _lockedBalances[owner],
             "Insufficient balance to lock"

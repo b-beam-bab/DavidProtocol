@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
 import {Currency} from "v4-core/src/types/Currency.sol";
 
+import {IERC20Minimal} from "v4-core/src/interfaces/external/IERC20Minimal.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
 import {IPoolManager} from "v4-core/src/interfaces/IPoolManager.sol";
 import {PoolKey} from "v4-core/src/types/PoolKey.sol";
@@ -60,7 +61,7 @@ contract SwapHook is BaseHook {
                 afterSwap: false,
                 beforeDonate: false,
                 afterDonate: false,
-                beforeSwapReturnDelta: false,
+                beforeSwapReturnDelta: true,
                 afterSwapReturnDelta: false,
                 afterAddLiquidityReturnDelta: false,
                 afterRemoveLiquidityReturnDelta: false
@@ -68,12 +69,13 @@ contract SwapHook is BaseHook {
     }
 
     function poolInitialize(
-        PoolId poolId,
+        PoolKey memory key,
         int256 scalarRoot,
         int256 initialAnchor,
         uint80 lnFeeRateRoot,
         uint256 expiry
     ) external {
+        PoolId poolId = key.toId();
         HookState storage hs = _pools[poolId];
         hs.scalarRoot = scalarRoot;
         hs.lnFeeRateRoot = lnFeeRateRoot;
@@ -95,7 +97,7 @@ contract SwapHook is BaseHook {
     }
 
     function beforeSwap(
-        address,
+        address sender,
         PoolKey calldata key,
         IPoolManager.SwapParams calldata swapParams,
         bytes calldata
@@ -105,15 +107,15 @@ contract SwapHook is BaseHook {
         bool exactInput = swapParams.amountSpecified < 0;
         if (isZct(key.currency0)) {
             if (swapParams.zeroForOne) {
-                require(exactInput);
+                require(exactInput, "a");
             } else {
-                require(!exactInput);
+                require(!exactInput, "b");
             }
         } else {
             if (swapParams.zeroForOne) {
-                require(!exactInput);
+                require(!exactInput, "c");
             } else {
-                require(exactInput);
+                require(exactInput, "d");
             }
         }
 
@@ -132,7 +134,12 @@ contract SwapHook is BaseHook {
                 -specifiedAmount,
                 block.timestamp
             );
-
+            poolManager.sync(asset);
+            IERC20Minimal(Currency.unwrap(asset)).transfer(
+                address(poolManager),
+                uint256(unspecifiedAmount)
+            );
+            poolManager.settle();
             poolManager.take(zct, address(this), uint256(specifiedAmount));
 
             returnDelta = toBeforeSwapDelta(
@@ -145,7 +152,13 @@ contract SwapHook is BaseHook {
                 specifiedAmount,
                 block.timestamp
             );
+            poolManager.sync(zct);
+            IERC20Minimal(Currency.unwrap(zct)).transfer(
+                address(poolManager),
+                uint256(specifiedAmount)
+            );
 
+            poolManager.settle();
             poolManager.take(asset, address(this), uint256(unspecifiedAmount));
 
             returnDelta = toBeforeSwapDelta(
@@ -197,8 +210,26 @@ contract SwapHook is BaseHook {
                 int256(assetAmountDesired),
                 block.timestamp
             );
-        poolManager.take(key.currency0, address(this), uint256(zctAmount));
-        poolManager.take(key.currency1, address(this), uint256(assetAmount));
+        (Currency zct, Currency asset) = isZct(key.currency0)
+            ? (key.currency0, key.currency1)
+            : (key.currency1, key.currency0);
+        poolManager.sync(zct);
+        IERC20Minimal(Currency.unwrap(zct)).transferFrom(
+            sender,
+            address(poolManager),
+            uint256(zctAmount)
+        );
+
+        poolManager.settle();
+        poolManager.take(zct, address(this), uint256(zctAmount));
+        poolManager.sync(asset);
+        IERC20Minimal(Currency.unwrap(asset)).transferFrom(
+            sender,
+            address(poolManager),
+            uint256(assetAmount)
+        );
+        poolManager.settle();
+        poolManager.take(asset, address(this), uint256(assetAmount));
     }
     function handleRemoveLiquidity(
         PoolKey calldata key,
@@ -233,6 +264,8 @@ contract SwapHook is BaseHook {
                     Math.sqrt(uint256(assetAmountDesired * zctAmountDesired))
                 ) -
                 MINIMUM_LIQUIDITY;
+            zctAmount = zctAmountDesired;
+            assetAmount = assetAmountDesired;
         } else {
             int256 liquidityZct = (zctAmountDesired * state.totalLiquidity) /
                 state.totalZct;
@@ -250,8 +283,7 @@ contract SwapHook is BaseHook {
                 assetAmount = assetAmountDesired;
             }
         }
-
-        require(liquidity > 0 && assetAmount > 0 && zctAmount > 0);
+        require(liquidity > 0 && assetAmount > 0 && zctAmount > 0, "a");
         state.totalAsset += assetAmount;
         state.totalZct += zctAmount;
         state.totalLiquidity += liquidity;
@@ -287,7 +319,6 @@ contract SwapHook is BaseHook {
             state.lnFeeRateRoot,
             timeToExpiry
         );
-
         int256 exchangeRate = _getExchangeRate(
             state.totalZct,
             state.totalAsset,
@@ -295,7 +326,6 @@ contract SwapHook is BaseHook {
             rateAnchor,
             amount
         );
-
         int256 assetToAccount = -((amount * 1e18) / exchangeRate);
         // calculate fee
         if (amount > 0) {
@@ -386,13 +416,10 @@ contract SwapHook is BaseHook {
         int256 netZctToAccount
     ) internal returns (int256 exchangeRate) {
         int256 numerator = totalZct - netZctToAccount;
-
         int256 proportion = ((numerator * 1e18) / (totalZct + totalAsset));
-
         require(proportion <= MAX_MARKET_PROPORTION);
 
         int256 lnProportion = _logProportion(proportion);
-
         exchangeRate = ((lnProportion * 1e18) / rateScalar) + rateAnchor;
         require(exchangeRate >= 1e18);
     }

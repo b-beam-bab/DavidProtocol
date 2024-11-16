@@ -21,43 +21,35 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { TransactionState } from "@/lib/types";
+import { Bond, TransactionState } from "@/lib/types";
 import { ErrorIcon, SuccessIcon } from "../svg";
+import { useAvailableBonds } from "@/lib/hooks/use-available-bonds";
+import { useAccount } from "wagmi";
+import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
+import { useBondBalance } from "@/lib/hooks/use-bond-balance";
+import { formatEther } from "viem";
 
-type IssueBondDialogProps = {
-  availableDeposit: number;
-};
-
-type BondMaturity = {
-  id: number;
-  date: string;
-  liquidity: number;
-  price: number;
-};
-
-// Sample data - replace with actual data
-const maturities: BondMaturity[] = [
-  { id: 1, date: "2024-12-31", liquidity: 100, price: 0.95 },
-  { id: 2, date: "2025-03-31", liquidity: 150, price: 0.92 },
-  { id: 3, date: "2025-06-30", liquidity: 200, price: 0.9 },
-];
-
-const LTV = 0.9; // Loan to Value ratio
-
-export function IssueBondDialog({ availableDeposit }: IssueBondDialogProps) {
+export function IssueBondDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [step, setStep] = React.useState(1);
-  const [selectedMaturity, setSelectedMaturity] =
-    React.useState<BondMaturity | null>(null);
+  const [selectedBond, setSelectedBond] = React.useState<Bond | null>(null);
   const [amount, setAmount] = React.useState(0);
   const [txState, setTxState] = React.useState<TransactionState>("idle");
   const [error, setError] = React.useState("");
 
-  const maxAmount = availableDeposit * LTV;
+  const { address } = useAccount();
+  const { balance: depositInGwei } = useDepositAmount(address);
+  const { balance: bondBalanceInGwei } = useBondBalance(address);
+
+  const totalGwei = depositInGwei - (bondBalanceInGwei ?? BigInt(0));
+  const availableDeposit = Number(formatEther(totalGwei));
+
+  const { bonds }: { bonds: Bond[] } = useAvailableBonds();
+  const sortedBonds = [...bonds].sort((a, b) => a.maturity - b.maturity);
 
   const resetDialog = () => {
     setStep(1);
-    setSelectedMaturity(null);
+    setSelectedBond(null);
     setAmount(0);
     setTxState("idle");
     setError("");
@@ -141,25 +133,29 @@ export function IssueBondDialog({ availableDeposit }: IssueBondDialogProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {maturities.map((maturity) => (
+              {sortedBonds.map((bond) => (
                 <TableRow
-                  key={maturity.id}
+                  key={bond.maturity}
                   className={`cursor-pointer hover:bg-accent/50 ${
-                    selectedMaturity?.id === maturity.id ? "bg-accent" : ""
+                    selectedBond?.maturity === bond.maturity ? "bg-accent" : ""
                   }`}
-                  onClick={() => setSelectedMaturity(maturity)}
+                  onClick={() => setSelectedBond(bond)}
                 >
                   <TableCell>
-                    {new Date(maturity.date).toLocaleDateString()}
+                    {new Date(bond.maturity).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </TableCell>
-                  <TableCell>{maturity.liquidity} ETH</TableCell>
-                  <TableCell>{maturity.price} ETH</TableCell>
+                  <TableCell>{bond.totalSupply} ETH</TableCell>
+                  <TableCell>{bond.price} ETH</TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
           <div className="flex justify-end">
-            <Button onClick={() => setStep(2)} disabled={!selectedMaturity}>
+            <Button onClick={() => setStep(2)} disabled={!selectedBond}>
               Proceed
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>
@@ -167,6 +163,8 @@ export function IssueBondDialog({ availableDeposit }: IssueBondDialogProps) {
         </div>
       );
     }
+
+    const maxAmount = availableDeposit * selectedBond!.marginRatio;
 
     return (
       <div className="space-y-6 py-4">
@@ -177,12 +175,16 @@ export function IssueBondDialog({ availableDeposit }: IssueBondDialogProps) {
                 Maturity Date
               </span>
               <span className="font-medium">
-                {new Date(selectedMaturity!.date).toLocaleDateString()}
+                {new Date(selectedBond!.maturity).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-muted-foreground">Price</span>
-              <span className="font-medium">{selectedMaturity!.price} ETH</span>
+              <span className="font-medium">{selectedBond!.price} ETH</span>
             </div>
           </div>
         </div>
@@ -191,14 +193,14 @@ export function IssueBondDialog({ availableDeposit }: IssueBondDialogProps) {
           <div className="flex justify-between">
             <span className="text-sm font-medium">Amount</span>
             <span className="text-sm text-muted-foreground">
-              {amount.toFixed(2)} ETH
+              {amount.toFixed(4)} ETH
             </span>
           </div>
           <Slider
             value={[amount]}
             onValueChange={([value]) => setAmount(value)}
             max={maxAmount}
-            step={0.1}
+            step={0.0001}
             className="py-4"
           />
           <div className="flex justify-between text-xs text-muted-foreground">

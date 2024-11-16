@@ -22,12 +22,12 @@ export default function MarketPage() {
   const sortedBonds = [...MOCK_BONDS].sort((a, b) => {
     if (sortField === "maturity") {
       return sortOrder === "asc"
-        ? a.maturityDate - b.maturityDate
-        : b.maturityDate - a.maturityDate;
+        ? a.maturity - b.maturity
+        : b.maturity - a.maturity;
     } else if (sortField === "liquidity") {
       return sortOrder === "asc"
-        ? a.liquidity - b.liquidity
-        : b.liquidity - a.liquidity;
+        ? Number(a.totalSupply) - Number(b.totalSupply)
+        : Number(b.totalSupply) - Number(a.totalSupply);
     } else {
       return sortOrder === "asc" ? a.price - b.price : b.price - a.price;
     }
@@ -73,7 +73,7 @@ export default function MarketPage() {
               />
               <TableBody>
                 {sortedBonds.map((bond) => (
-                  <BondTableRow key={bond.id} bond={bond} />
+                  <BondTableRow key={bond.maturity} bond={bond} />
                 ))}
               </TableBody>
             </Table>

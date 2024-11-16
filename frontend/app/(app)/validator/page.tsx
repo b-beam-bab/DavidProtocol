@@ -10,8 +10,6 @@ import { ScrollBar } from "@/components/ui/scroll-area";
 import { MOCK_ISSUED_BONDS } from "@/mock/bond";
 
 export default function ValidatorPage() {
-  const availableDeposit = 10;
-
   return (
     <div className="pt-4">
       <div className="flex items-center justify-center  h-[236px] bg-gradient-to-r from-[#DAC2D8] to-[#F6EAF5]">
@@ -41,14 +39,14 @@ export default function ValidatorPage() {
           <ScrollArea className="overflow-auto w-full whitespace-nowrap rounded-lg border">
             <div className="flex gap-4 p-4">
               {MOCK_ISSUED_BONDS.map((bond) => (
-                <BondCard key={bond.id} bond={bond} />
+                <BondCard key={bond.maturity} bond={bond} />
               ))}
 
               {/* Issue New Bond Card */}
               <Card className="flex w-[300px] shrink-0 items-center justify-center">
                 <CardContent className="flex flex-col items-center justify-center py-8 w-full">
                   <CardFooter>
-                    <IssueBondDialog availableDeposit={availableDeposit} />
+                    <IssueBondDialog />
                   </CardFooter>
                 </CardContent>
               </Card>

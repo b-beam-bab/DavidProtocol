@@ -1,13 +1,11 @@
 import { sepolia, unichainSepolia } from "viem/chains";
 
 export type Bond = {
-  id: number;
+  address: `0x${string}`;
+  marginRatio: number;
   name: string;
-  network: typeof sepolia | typeof unichainSepolia;
-  maturityDate: number;
-  liquidity: number;
-  maturityValue: string;
-  fixedAPY: number;
+  maturity: number;
+  totalSupply: string;
   price: number;
 };
 

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BondPriceChart } from "@/components/chart/bond-price-chart";
 import { SwapUI } from "@/components/swap";
-import { MOCK_BONDS } from "@/mock/bond";
+import { useAvailableBonds } from "@/lib/hooks/use-available-bonds";
 
 type Props = {
   params: {
@@ -18,9 +18,14 @@ type Props = {
 export default function BondDetail({ params }: Props) {
   const { maturity } = params;
 
-  console.log("Maturity:", maturity);
+  const { bonds } = useAvailableBonds();
+  const bond = bonds.find((bond) => bond.maturity === Number(maturity));
 
-  const bond = MOCK_BONDS[0];
+  if (!bond) {
+    return <div>Bond not found</div>;
+  }
+
+  const fixedAPY = ((1 / bond.price - 1) * 100).toFixed(2);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -62,7 +67,7 @@ export default function BondDetail({ params }: Props) {
                     Maturity Date
                   </dt>
                   <dd className="text-lg font-semibold">
-                    {new Date(bond.maturityDate).toLocaleDateString("en-US", {
+                    {new Date(bond.maturity).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "short",
                       day: "numeric",
@@ -79,13 +84,15 @@ export default function BondDetail({ params }: Props) {
                   <dt className="text-sm font-medium text-muted-foreground">
                     Fixed APY
                   </dt>
-                  <dd className="text-lg font-semibold">{bond.fixedAPY}%</dd>
+                  <dd className="text-lg font-semibold">{fixedAPY}%</dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-muted-foreground">
                     Total Liquidity
                   </dt>
-                  <dd className="text-lg font-semibold">$ {bond.liquidity}</dd>
+                  <dd className="text-lg font-semibold">
+                    {bond.totalSupply} ETH
+                  </dd>
                 </div>
               </dl>
             </CardContent>

@@ -204,7 +204,7 @@ contract CounterScript is Script, DeployPermit2 {
 
         token0.transfer(address(manager), 100 ether);
         token1.transfer(address(manager), 100 ether);
-        SwapHook(hook).addLiquidity(poolKey, 100 ether, 100 ether);
+        SwapHook(hook).addLiquidity(poolKey, 0.01 ether, 0.01 ether);
 
         // swap some tokens
         bool zeroForOne = true;

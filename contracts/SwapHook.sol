@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 import "forge-std/Script.sol";
 
 import {BaseHook} from "v4-periphery/src/base/hooks/BaseHook.sol";
-import {Currency} from "v4-core/src/types/Currency.sol";
+import {Currency, CurrencyLibrary} from "v4-core/src/types/Currency.sol";
 
 import {IERC20Minimal} from "v4-core/src/interfaces/external/IERC20Minimal.sol";
 import {Hooks} from "v4-core/src/libraries/Hooks.sol";
@@ -141,11 +141,15 @@ contract SwapHook is BaseHook {
                 block.timestamp
             );
             poolManager.sync(asset);
-            IERC20Minimal(Currency.unwrap(asset)).transfer(
-                address(poolManager),
-                uint256(unspecifiedAmount)
-            );
-            poolManager.settle();
+            if (CurrencyLibrary.ADDRESS_ZERO == asset) {
+                poolManager.settle{value: uint256(unspecifiedAmount)}();
+            } else {
+                IERC20Minimal(Currency.unwrap(asset)).transfer(
+                    address(poolManager),
+                    uint256(unspecifiedAmount)
+                );
+                poolManager.settle();
+            }
             poolManager.take(zct, address(this), uint256(specifiedAmount));
 
             returnDelta = toBeforeSwapDelta(
@@ -179,7 +183,7 @@ contract SwapHook is BaseHook {
         PoolKey calldata key,
         uint256 zctAmountDesired,
         uint256 assetAmountDesired
-    ) external {
+    ) external payable {
         poolManager.unlock(
             abi.encodeCall(
                 this.handleAddLiquidity,
@@ -229,14 +233,19 @@ contract SwapHook is BaseHook {
         poolManager.settle();
         poolManager.take(zct, address(this), uint256(zctAmount));
         poolManager.sync(asset);
-        IERC20Minimal(Currency.unwrap(asset)).transferFrom(
-            sender,
-            address(poolManager),
-            uint256(assetAmount)
-        );
-        poolManager.settle();
+        if (CurrencyLibrary.ADDRESS_ZERO == asset) {
+            poolManager.settle{value: uint256(assetAmount)}();
+        } else {
+            IERC20Minimal(Currency.unwrap(asset)).transferFrom(
+                sender,
+                address(poolManager),
+                uint256(assetAmount)
+            );
+            poolManager.settle();
+        }
         poolManager.take(asset, address(this), uint256(assetAmount));
     }
+
     function handleRemoveLiquidity(
         PoolKey calldata key,
         uint256 amount,

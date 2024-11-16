@@ -50,20 +50,20 @@ contract Deploy is Script, Constants, Config {
                 Hooks.BEFORE_SWAP_RETURNS_DELTA_FLAG
         );
         IPoolManager manager = IPoolManager(
-            0x1B1C77B606d13b09C84d1c7394B96b147bC03147
+            0x8C4BcBE6b9eF47855f97E675296FA3F6fafa5F1A
         );
 
-        address oracle = 0x7d519f2e76139db520Bfd3F896A67aA850069c50;
+        // address oracle = 0x7d519f2e76139db520Bfd3F896A67aA850069c50;
 
         // Mine a salt that will produce a hook address with the correct permissions
         (address hookAddress, bytes32 salt) = HookMiner.find(
             CREATE2_DEPLOYER,
             permissions,
             type(SwapHook).creationCode,
-            abi.encode(address(manager), address(oracle))
+            abi.encode(address(manager))
         );
 
-        SwapHook sh = new SwapHook{salt: salt}(manager, oracle);
+        SwapHook sh = new SwapHook{salt: salt}(manager);
 
         // SwapHook hook = new SwapHook(
         //     IPoolManager(0x1B1C77B606d13b09C84d1c7394B96b147bC03147)

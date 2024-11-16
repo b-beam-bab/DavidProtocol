@@ -58,3 +58,11 @@ export const MOCK_BONDS: Bond[] = [
     price: 0.5067,
   },
 ];
+
+export const MOCK_ISSUED_BONDS: (Bond & { amount: number })[] = [
+  { ...MOCK_BONDS[0], amount: 15 },
+  { ...MOCK_BONDS[1], amount: 10 },
+  { ...MOCK_BONDS[2], amount: 20 },
+  { ...MOCK_BONDS[3], amount: 5 },
+  { ...MOCK_BONDS[4], amount: 7 },
+];

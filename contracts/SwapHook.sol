@@ -23,6 +23,7 @@ contract SwapHook is BaseHook {
         int256 totalAsset; // 이더양
         int256 totalLiquidity; // 발행된 lp 토큰양
         int256 scalarRoot;
+        int256 initialAnchor;
         uint256 expiry;
         uint256 lnFeeRateRoot;
         uint256 lastLnImpliedRate;
@@ -71,9 +72,14 @@ contract SwapHook is BaseHook {
         PoolId poolId,
         int256 scalarRoot,
         int256 initialAnchor,
-        uint80 lnFeeRateRoot
+        uint80 lnFeeRateRoot,
+        uint256 expiry
     ) external {
         HookState storage hs = _pools[poolId];
+        hs.scalarRoot = scalarRoot;
+        hs.lnFeeRateRoot = lnFeeRateRoot;
+        hs.initialAnchor = initialAnchor;
+        hs.expiry = expiry;
     }
 
     function beforeAddLiquidity(
@@ -341,7 +347,6 @@ contract SwapHook is BaseHook {
             int256(amount)
         );
         // TODO settle take
-        
     }
 
     function _addLiquidity(
@@ -394,5 +399,21 @@ contract SwapHook is BaseHook {
         state.totalLiquidity -= amount;
         state.totalAsset -= assetAmount;
         state.totalZct -= zctAmount;
+    }
+
+    function setInitialLnImpliedRate(
+        HookState memory state,
+        int256 initialAnchor,
+        uint256 blockTime
+    ) internal pure {
+        uint256 timeToExpiry = state.expiry - blockTime;
+        int256 rateScalar = _getRateScalar(state.scalarRoot, timeToExpiry);
+        state.lastLnImpliedRate = _getLnImpliedRate(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            initialAnchor,
+            timeToExpiry
+        );
     }
 }

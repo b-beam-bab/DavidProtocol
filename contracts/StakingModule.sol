@@ -116,4 +116,8 @@ contract StakingModule is IStakingModule {
     function _getWithdrawalCredentials() internal view returns (bytes memory) {
         return abi.encodePacked(bytes1(uint8(1)), bytes11(0), address(this));
     }
+
+    function totalLockedBalance() external view returns (uint256) {
+        return _totalLockedBalance;
+    }
 }

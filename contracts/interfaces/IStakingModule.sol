@@ -12,4 +12,5 @@ interface IStakingModule {
     function mintBond(IZeroCouponBond zcbContract, uint256 amount) external;
     function createWithdrawal(uint256 amount) external;
     function completeWithdrawal() external;
+    function totalLockedBalance() external view returns (uint256);
 }

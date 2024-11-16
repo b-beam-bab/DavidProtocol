@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeftIcon, InfoIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,12 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tooltip as UITooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { BondPriceChart } from "@/components/chart/bond-price-chart";
 
 type Props = {
@@ -134,31 +128,6 @@ export default function BondDetail({ params }: Props) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Additional Information */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            Additional Information
-            <TooltipProvider>
-              <UITooltip>
-                <TooltipTrigger>
-                  <InfoIcon className="h-4 w-4 text-muted-foreground" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Important details about this bond and its terms.</p>
-                </TooltipContent>
-              </UITooltip>
-            </TooltipProvider>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            This section can include important disclaimers, terms and
-            conditions, or any other relevant information about the bond.
-          </p>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -43,14 +43,23 @@ export default function MarketPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="pt-4">
+      <div className="flex items-center justify-center  h-[236px] bg-gradient-to-r from-[#DAC2D8] to-[#F6EAF5]">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Trade Bonds</h1>
+          <p className="text-lg text-muted-foreground">
+            Explore and delegate to our unified bond liquidity pool.
+          </p>
+        </div>
+      </div>
       <Card className="bg-background">
         <CardHeader>
-          <CardTitle className="text-2xl font-bold">Trade Bonds</CardTitle>
-          <CardDescription className="text-lg text-muted-foreground">
-            Explore and delegate to our unified bond liquidity pool. Each bond
-            represents a standardized zero-coupon bond with equal value, helping
-            to decentralize the delegation process and reduce capital
+          <CardTitle className="text-2xl font-bold"></CardTitle>
+          <CardDescription className="text-lg text-center text-muted-foreground">
+            Each bond represents a standardized zero-coupon bond with equal
+            value,
+            <br />
+            helping to decentralize the delegation process and reduce capital
             centralization among validators.
           </CardDescription>
         </CardHeader>

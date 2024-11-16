@@ -99,15 +99,17 @@ const BondTableRow = ({ bond }: BondTableRowProps) => {
   return (
     <TableRow key={bond.id} className="">
       <TableCell>
-        <div>
-          {new Date(bond.maturityDate).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-          })}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {daysRemaining} days
+        <div className="flex gap-[12px] items-center">
+          <div>
+            {new Date(bond.maturityDate).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </div>
+          <div className="text-sm text-muted-foreground text-[#B45BA9] bg-[#F1E1EF] px-[6px] py-[4px] rounded-[8px]">
+            {daysRemaining} days
+          </div>
         </div>
       </TableCell>
       <TableCell>
@@ -126,7 +128,7 @@ const BondTableRow = ({ bond }: BondTableRowProps) => {
       </TableCell>
       <TableCell>
         <Link className="w-full" href={`/market/${bond.maturityDate}`}>
-          <Button className="w-full">Trade</Button>
+          <Button className="w-full rounded-[40px]">Trade</Button>
         </Link>
       </TableCell>
     </TableRow>

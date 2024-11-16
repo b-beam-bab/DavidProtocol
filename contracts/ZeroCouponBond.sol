@@ -22,6 +22,7 @@ struct IssuerInfo {
 contract ZeroCouponBond is ERC20, IZeroCouponBond {
     uint256 constant MAX_PENDING_WITHDRAWAL_COUNT = 2 ** 27;
     uint256 constant MAX_PENDING_WITHDRAWAL_PER_CALL = 100;
+    uint256 constant marginRatioDecimals = 1e3;
 
     IStakingModuleManager public stakingModuleManager;
     uint256 public marginRatio;
@@ -58,7 +59,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
 
     // TODO: Add modifier checking valid caller
     function mint(address to, uint256 amount) external notExpired {
-        uint256 margin = amount * marginRatio;
+        uint256 margin = (amount * marginRatio) / marginRatioDecimals;
         uint256 collateral = amount - margin;
         _mint(to, collateral);
 

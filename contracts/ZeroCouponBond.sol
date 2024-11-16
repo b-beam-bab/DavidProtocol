@@ -53,6 +53,9 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         _;
     }
 
+    ///////////////////////////////////////////////
+    // Actions from the bond issuers perspective
+
     // TODO: Add modifier checking valid caller
     function mint(address to, uint256 amount) external notExpired {
         uint256 margin = amount * marginRatio;
@@ -62,15 +65,6 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         issuers[to].principal += collateral;
         issuers[to].collateral += collateral;
         issuers[to].margin += margin;
-    }
-
-    function redeem() external expired {
-        uint256 bondBalance = balanceOf(msg.sender);
-        require(bondBalance > 0, "No balance to redeem");
-
-        // TODO: Add guard code checking balance
-        _burn(msg.sender, bondBalance);
-        Address.sendValue(payable(msg.sender), bondBalance);
     }
 
     function earlyRepay() external payable notExpired {
@@ -84,6 +78,21 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
             issuers[msg.sender].collateral = 0;
         }
     }
+
+    ///////////////////////////////////////////////
+    // Actions from the bond holder’s perspective
+
+    function redeem() external expired {
+        uint256 bondBalance = balanceOf(msg.sender);
+        require(bondBalance > 0, "No balance to redeem");
+
+        // TODO: Add guard code checking balance
+        _burn(msg.sender, bondBalance);
+        Address.sendValue(payable(msg.sender), bondBalance);
+    }
+
+    ///////////////////////////////////////////////
+    // Actions from the system manager's perspective
 
     function secureFundsForValidator(
         address validator,
@@ -104,6 +113,9 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         issuers[validator] = IssuerInfo(0, 0, 0);
         createWithdrawalRequest(validator, amountToWithdraw, amountToLiquidate);
     }
+
+    ///////////////////////////////////////////////
+    // Helpers
 
     function createWithdrawalRequest(
         address recipient,
@@ -150,6 +162,9 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
             pendingWithdrawalsTail = 0;
         }
     }
+
+    ///////////////////////////////////////////////
+    // Predicates
 
     function verifyPenalty(
         bytes calldata proof

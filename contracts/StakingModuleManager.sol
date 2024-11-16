@@ -23,7 +23,7 @@ contract StakingModuleManager is IStakingModuleManager {
         bytes32 depositDataRoot
     ) external payable {
         // Even if the EOA address is the same, cases with different pubkeys are distinguished.
-        bytes32 key = keccak256(abi.encodePacked(msg.sender, pubkey));
+        bytes32 key = _calculateKey(msg.sender, pubkey);
         IStakingModule stakingModule = stakingModules[key];
         if (address(stakingModule) == address(0)) {
             stakingModule = _createStakingModule();
@@ -35,6 +35,24 @@ contract StakingModuleManager is IStakingModuleManager {
             signature,
             depositDataRoot
         );
+    }
+
+    function getStakingModule(
+        address owner,
+        bytes calldata pubkey
+    ) view returns (address) {
+        bytes32 key = _calculateKey(owner, pubkey);
+
+        IStakingModule stakingModule = stakingModules[key];
+        return address(stakingModule);
+    }
+
+    function _calculateKey(
+        address owner,
+        bytes calldata pubkey
+    ) internal returns (bytes32) {
+        bytes32 key = keccak256(abi.encodePacked(msg.sender, pubkey));
+        return key;
     }
 
     function _createStakingModule() internal returns (IStakingModule) {

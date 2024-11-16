@@ -73,7 +73,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         Address.sendValue(payable(msg.sender), bondBalance);
     }
 
-    function earlyRepayment() external payable notExpired {
+    function earlyRepay() external payable notExpired {
         require(msg.value > 0, "Invalid value");
 
         require(issuers[msg.sender].collateral > 0, "No debt to repay");

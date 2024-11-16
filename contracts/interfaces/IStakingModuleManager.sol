@@ -9,4 +9,9 @@ interface IStakingModuleManager {
         bytes calldata signature,
         bytes32 depositDataRoot
     ) external payable;
+
+    function getStakingModule(
+        address owner,
+        bytes calldata pubkey
+    ) view returns (address);
 }

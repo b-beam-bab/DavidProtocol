@@ -12,7 +12,6 @@ contract StakingModule is IStakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
     address public immutable owner;
-    uint256 private _totalBalance;
     uint256 private _totalLockedBalance;
     mapping(address => uint256) private _lockedBalances;
     mapping(address => uint256) private _withdrawableBalances;
@@ -48,7 +47,7 @@ contract StakingModule is IStakingModule {
         // Note
         // 1. Due to issues in the development environment, we adjusted the scale of deposit amounts.
         // 2. We modified the conditions to allow for more flexible deposit amounts, considering the Pectra upgrade.
-        require(msg.value > 1 ether, "Invalid staking amount");
+        require(msg.value >= 1 ether, "Invalid staking amount");
 
         // Note
         // 1. Due to a delay in reflecting the validator’s deposit details, we replace this part to balance update.
@@ -56,8 +55,6 @@ contract StakingModule is IStakingModule {
         //    However, effective active balance can grows after the pectra update, so the accumulation of balance will become meaningful.
         //    Considering this, the new deposit will be added to the existing balance.
         _lockBalance(owner, msg.value);
-
-        _totalBalance += msg.value;
     }
 
     function _lockBalance(address recipent, uint256 amount) internal {

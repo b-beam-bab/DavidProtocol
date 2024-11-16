@@ -181,4 +181,15 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         // TODO: Do something to verify proof and check condition of liquidation
         return true;
     }
+
+    ///////////////////////////////////////////////
+    // Test
+
+    function setMaturity(uint256 duration) external {
+        maturity = block.timestamp + duration;
+    }
+
+    function setMarginRatio(uint256 r) external {
+        marginRatio = r;
+    }
 }

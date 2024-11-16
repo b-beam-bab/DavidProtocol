@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface IZeroCouponBond is IERC20 {
     function mint(address to, uint256 amount) external;
-    function redeem(uint256 amount) external;
+    function redeem() external;
     function earlyRepayment(uint256 amount) external;
     function requestWithdrawalForValidator(uint256 amount) external;
     function secureFundsForValidator(

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "./interfaces/IStakingModuleManager.sol";
@@ -10,6 +11,8 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     IStakingModuleManager public stakingModuleManager;
     uint256 public marginRatio;
     uint256 public maturityBlock;
+
+    uint256 public issueCount;
 
     mapping(address => uint256) margins;
 
@@ -35,8 +38,20 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         margins[to] += margin;
     }
 
-    function redeem(uint256 amount) external {}
-    function earlyRepayment(uint256 amount) external {}
+    function redeem() external {
+        require(block.number > maturityBlock, "Bond has not been expired");
+
+        uint256 bondBalance = balanceOf(msg.sender);
+        require(bondBalance > 0, "No balance to redeem");
+
+        // TODO: Add guard code checking balance
+        _burn(msg.sender, bondBalance);
+        Address.sendValue(payable(msg.sender), bondBalance);
+    }
+
+    function earlyRepayment(uint256 amount) external {
+        require(block.number < maturityBlock, "Bond had been expired");
+    }
     function requestWithdrawalForValidator(uint256 amount) external {}
     function secureFundsForValidator(
         address validator,

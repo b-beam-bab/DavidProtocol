@@ -1,5 +1,3 @@
-import { sepolia, unichainSepolia } from "viem/chains";
-
 export type Bond = {
   address: `0x${string}`;
   marginRatio: number;

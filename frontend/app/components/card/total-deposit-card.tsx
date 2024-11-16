@@ -33,7 +33,7 @@ export const TotalDepositCard = () => {
           <p className="text-xs text-muted-foreground">Loading...</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            ≈ ${price * Number(deposit)} USD
+            ≈ ${(price * Number(deposit)).toFixed(4)} USD
           </p>
         )}
       </CardContent>

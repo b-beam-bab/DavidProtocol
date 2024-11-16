@@ -29,7 +29,7 @@ export const CurrentBalanceCard = () => {
           <p className="text-xs text-muted-foreground">Loading...</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            ≈ ${price * Number(totalEth)} USD
+            ≈ ${(price * Number(totalEth)).toFixed(4)} USD
           </p>
         )}
       </CardContent>

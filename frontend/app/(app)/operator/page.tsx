@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+// import { useState } from "react";
 
 import { Wallet, FileText } from "lucide-react";
 
@@ -16,7 +16,7 @@ import { AddDepositDialog } from "@/components/dialog/add-deposit-dialog";
 import { IssueBondDialog } from "@/components/dialog/issue-bond-dialog";
 
 export default function OperatorPage() {
-  const [deposit, setDeposit] = useState(0);
+  const deposit = 0;
 
   return (
     <div className="container mx-auto px-4 py-6">

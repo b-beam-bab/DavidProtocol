@@ -30,6 +30,8 @@ contract SwapHook is BaseHook {
 
     mapping(PoolId id => HookState) internal _pools;
 
+    error AddLiquidityDirectToHook();
+
     uint256 internal constant IMPLIED_RATE_TIME = 365 * DAY;
     int256 internal constant MAX_MARKET_PROPORTION = (1e18 * 96) / 100;
 
@@ -45,7 +47,7 @@ contract SwapHook is BaseHook {
             Hooks.Permissions({
                 beforeInitialize: true, // true
                 afterInitialize: false,
-                beforeAddLiquidity: false,
+                beforeAddLiquidity: true, // true
                 afterAddLiquidity: false,
                 beforeRemoveLiquidity: false,
                 afterRemoveLiquidity: false,
@@ -76,6 +78,15 @@ contract SwapHook is BaseHook {
     ) external override returns (bytes4) {
         // TODO IMPLEMENT
         return BaseHook.beforeInitialize.selector;
+    }
+
+    function beforeAddLiquidity(
+        address sender,
+        PoolKey calldata key,
+        IPoolManager.ModifyLiquidityParams calldata params,
+        bytes calldata hookData
+    ) external override returns (bytes4) {
+        revert AddLiquidityDirectToHook();
     }
 
     function beforeSwap(
@@ -253,7 +264,7 @@ contract SwapHook is BaseHook {
     }
 
     //     ///////////////////////
-    //     totalZct: 시장에 있는 총 PT 수량.
+    // totalZct: 시장에 있는 총 PT 수량.
     // totalAsset: 시장에 있는 총 자산 수량.
     // rateScalar: 시장의 민감도를 조정하는 변수.
     // rateAnchor: 암묵적 이자율의 중심을 조정하는 변수.

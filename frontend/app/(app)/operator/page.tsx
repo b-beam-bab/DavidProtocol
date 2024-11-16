@@ -1,7 +1,7 @@
 export default function OperatorPage() {
   return (
     <div>
-      <h1>Validate</h1>
+      <h1>Operator</h1>
       {/* Validate content */}
     </div>
   );

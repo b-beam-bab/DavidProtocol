@@ -1,5 +1,9 @@
+"use client";
+
 import { ChartSpline } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+
+const APY = 4.8; // TODO: hardcoded value
 
 export const APYCard = () => {
   return (
@@ -9,7 +13,7 @@ export const APYCard = () => {
         <ChartSpline className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">4.80%</div>
+        <div className="text-2xl font-bold">{APY.toFixed(2)}%</div>
         <p className="text-xs text-muted-foreground">
           Based on current network conditions
         </p>

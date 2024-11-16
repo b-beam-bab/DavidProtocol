@@ -11,6 +11,8 @@ import {PoolId, PoolIdLibrary} from "v4-core/src/types/PoolId.sol";
 import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary, toBeforeSwapDelta} from "v4-core/src/types/BeforeSwapDelta.sol";
 
+import {Math} from "./libraries/Math.sol";
+
 import {LogExpMath} from "./libraries/LogExpMath.sol";
 
 contract SwapHook is BaseHook {
@@ -19,7 +21,7 @@ contract SwapHook is BaseHook {
     struct HookState {
         int256 totalZct; // 제로쿠폰본드 양
         int256 totalAsset; // 이더양
-        int256 totalLp; // 발행된 lp 토큰양
+        int256 totalLiquidity; // 발행된 lp 토큰양
         int256 scalarRoot;
         uint256 expiry;
         uint256 lnFeeRateRoot;
@@ -32,6 +34,8 @@ contract SwapHook is BaseHook {
 
     error AddLiquidityDirectToHook();
 
+    int256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
+    int256 internal constant PERCENTAGE_DECIMALS = 100;
     uint256 internal constant DAY = 86400;
     uint256 internal constant IMPLIED_RATE_TIME = 365 * DAY;
     int256 internal constant MAX_MARKET_PROPORTION = (1e18 * 96) / 100;
@@ -287,5 +291,59 @@ contract SwapHook is BaseHook {
         int256 logitP = (proportion * 1e18) / (1e18 - proportion);
 
         res = logitP.ln();
+    }
+
+    // LIQUIDITY
+
+    function _addLiquidity(
+        HookState memory state,
+        int256 zctAmountDesired,
+        int256 assetAmountDesired,
+        uint256 blockTime
+    )
+        internal
+        returns (int256 liquidity, int256 zctAmount, int256 assetAmount)
+    {
+        liquidity;
+        if (state.totalLiquidity == 0) {
+            liquidity =
+                int256(
+                    Math.sqrt(uint256(assetAmountDesired * zctAmountDesired))
+                ) -
+                MINIMUM_LIQUIDITY;
+        } else {
+            int256 liquidityZct = (zctAmountDesired * state.totalLiquidity) /
+                state.totalZct;
+            int256 liquidityAsset = (assetAmountDesired *
+                state.totalLiquidity) / state.totalAsset;
+            if (liquidityZct < liquidityAsset) {
+                liquidity = liquidityZct;
+                zctAmount = zctAmountDesired;
+                assetAmount =
+                    (state.totalAsset * liquidity) /
+                    state.totalLiquidity;
+            } else {
+                liquidity = liquidityAsset;
+                zctAmount = (state.totalZct * liquidity) / state.totalLiquidity;
+                assetAmount = assetAmountDesired;
+            }
+        }
+
+        require(liquidity > 0 && assetAmount > 0 && zctAmount > 0);
+        state.totalAsset += assetAmount;
+        state.totalZct += zctAmount;
+        state.totalLiquidity += liquidity;
+    }
+
+    function _removeLiquidity(
+        HookState memory state,
+        int256 amount
+    ) internal returns (int256 zctAmount, int256 assetAmount) {
+        zctAmount = (amount * state.totalZct) / state.totalLiquidity;
+        assetAmount = (amount * state.totalAsset) / state.totalLiquidity;
+        require(zctAmount != 0 || assetAmount != 0);
+        state.totalLiquidity -= amount;
+        state.totalAsset -= assetAmount;
+        state.totalZct -= zctAmount;
     }
 }

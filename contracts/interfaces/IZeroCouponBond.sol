@@ -7,11 +7,6 @@ interface IZeroCouponBond is IERC20 {
     function mint(address to, uint256 amount) external;
     function redeem() external;
     function earlyRepayment(uint256 amount) external;
-    function requestWithdrawalForValidator(
-        address recipient,
-        uint256 amount,
-        bytes calldata proof
-    ) external;
     function secureFundsForValidator(
         address validator,
         bytes calldata proof

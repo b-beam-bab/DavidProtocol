@@ -88,27 +88,6 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         }
     }
 
-    // TODO: An entity to have eligibility to run this funcion will be determined in the future
-    function requestWithdrawalForValidator(
-        address recipient,
-        uint256 amount,
-        bytes calldata proof
-    ) external {
-        // Note
-        // This part is not an essential feature, so it will be implemented later.
-        //
-        // uint256 penalty = verifyPenalty(proof);
-        // if (collaterals[recipient] >= amount) {
-        //     collaterals[recipient] -= amount;
-        // } else {
-        //     collaterals[recipient] = 0;
-        // }
-        // IStakingModule(recipient).createWithdrawal(amount);
-        // PendingWithdrawal p = PendingWithdrawal(recipient, amount);
-        // pendingWithdrawals[pendingWithdrawalsTail] = p;
-        // pendingWithdrawalsTail++;
-    }
-
     function createWithdrawalRequest(
         address recipient,
         uint256 amountToWithdraw,

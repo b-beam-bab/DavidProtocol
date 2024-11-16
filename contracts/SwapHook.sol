@@ -151,6 +151,15 @@ contract SwapHook is BaseHook {
         );
     }
 
+    function removeLiquidity(PoolKey calldata key, uint256 amount) external {
+        poolManager.unlock(
+            abi.encodeCall(
+                this.handleRemoveLiquidity,
+                (key, amount, msg.sender)
+            )
+        );
+    }
+
     function handleAddLiquidity(
         PoolKey calldata key,
         uint256 zctAmountDesired,
@@ -170,11 +179,13 @@ contract SwapHook is BaseHook {
                 int256(assetAmountDesired),
                 block.timestamp
             );
-        // TODO settle take
+        poolManager.take(key.currency0, address(this), zctAmount);
+        poolManager.take(key.currency1, address(this), assetAmount);
     }
     function handleRemoveLiquidity(
         PoolKey calldata key,
-        uint256 amount
+        uint256 amount,
+        address sender
     ) external returns (bytes memory) {
         PoolId id = key.toId();
         HookState memory hs = _pools[id];
@@ -182,7 +193,8 @@ contract SwapHook is BaseHook {
             hs,
             int256(amount)
         );
-        // TODO settle take
+        poolManager.take(key.currency0, sender, zctAmount);
+        poolManager.take(key.currency1, sender, assetAmount);
     }
 
     // INTERNAL FUNCTIONS

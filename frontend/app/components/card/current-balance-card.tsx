@@ -1,13 +1,21 @@
+"use client";
+
 import { CircleDollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useEthPrice } from "@/lib/hooks/use-eth-price";
+import { useAccount } from "wagmi";
+import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
+import { formatEther } from "viem";
+import { useBondBalance } from "@/lib/hooks/use-bond-balance";
 
-type CurrentBalanceCardProps = {
-  totalEth: number;
-};
-
-export const CurrentBalanceCard = ({ totalEth }: CurrentBalanceCardProps) => {
+export const CurrentBalanceCard = () => {
+  const { address } = useAccount();
   const { data: price, isLoading } = useEthPrice();
+  const { balance: depositInGwei } = useDepositAmount(address);
+  const { balance: bondBalanceInGwei } = useBondBalance(address);
+
+  const totalGwei = depositInGwei + (bondBalanceInGwei ?? BigInt(0));
+  const totalEth = formatEther(totalGwei);
 
   return (
     <Card>
@@ -21,7 +29,7 @@ export const CurrentBalanceCard = ({ totalEth }: CurrentBalanceCardProps) => {
           <p className="text-xs text-muted-foreground">Loading...</p>
         ) : (
           <p className="text-xs text-muted-foreground">
-            ≈ ${price * totalEth} USD
+            ≈ ${price * Number(totalEth)} USD
           </p>
         )}
       </CardContent>

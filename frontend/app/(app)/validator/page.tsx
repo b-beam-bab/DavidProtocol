@@ -10,7 +10,6 @@ import { ScrollBar } from "@/components/ui/scroll-area";
 import { MOCK_ISSUED_BONDS } from "@/mock/bond";
 
 export default function ValidatorPage() {
-  const totalEthBalance = 30;
   const availableDeposit = 10;
 
   return (
@@ -28,7 +27,7 @@ export default function ValidatorPage() {
       <div className="mx-auto pt-8 pb-[100px] px-[108px] bg-white">
         {/* Stats Cards */}
         <div className="mb-8 grid gap-4 md:grid-cols-3">
-          <CurrentBalanceCard totalEth={totalEthBalance} />
+          <CurrentBalanceCard />
           <TotalDepositCard />
           <APYCard />
         </div>

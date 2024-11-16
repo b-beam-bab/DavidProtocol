@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "./interfaces/IDepositContract.sol";
 import "./interfaces/IStakingModule.sol";
 import "./interfaces/IStakingModuleManager.sol";
+import "./interfaces/IZeroCouponBond.sol";
 
 contract StakingModule is IStakingModule {
     IDepositContract public immutable depositContract;
@@ -33,7 +34,7 @@ contract StakingModule is IStakingModule {
 
     modifier onlyOwner() {
         require(
-            msg.sender == address(owner),
+            msg.sender == owner,
             "StakigModule::onlyOwner - Invalid caller"
         );
         _;
@@ -74,15 +75,6 @@ contract StakingModule is IStakingModule {
         _totalBalance += msg.value;
     }
 
-    function lockBalance(address recipent, uint256 amount) external {
-        require(
-            amount <= _lockedBalances[owner],
-            "Insufficient balance to lock"
-        );
-        _lockBalance(recipent, amount);
-        _lockedBalances[owner] -= amount;
-    }
-
     function _lockBalance(address recipent, uint256 amount) internal {
         _lockedBalances[recipent] += amount;
         _totalLockedBalance += amount;
@@ -99,6 +91,18 @@ contract StakingModule is IStakingModule {
         _totalLockedBalance -= amount;
 
         _withdrawableBalances[recipent] += amount;
+    }
+
+    function mintBond(
+        IZeroCouponBond zcbContract,
+        uint256 amount
+    ) external onlyOwner {
+        uint256 lockedBalance = _lockedBalances[msg.sender];
+        require(amount <= lockedBalance, "Insufficient locked balance");
+
+        _lockedBalances[msg.sender] -= amount;
+        zcbContract.mint(amount);
+        _lockedBalances[address(zcbContract)] += amount;
     }
 
     function createWithdrawal(uint256 amount) external {

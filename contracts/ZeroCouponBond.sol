@@ -45,12 +45,12 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     }
 
     modifier expired() {
-        require(maturity >= block.timestamp, "This bond is not expired");
+        require(maturity <= block.timestamp, "This bond is not expired");
         _;
     }
 
     modifier notExpired() {
-        require(maturity < block.timestamp, "This bond is expired");
+        require(block.timestamp < maturity, "This bond is expired");
         _;
     }
 

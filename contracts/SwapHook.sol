@@ -18,12 +18,11 @@ contract SwapHook is BaseHook {
 
     struct HookState {
         int256 totalZct; // 제로쿠폰본드 양
-        int256 totalEth; // 이더양
+        int256 totalAsset; // 이더양
         int256 totalLp; // 발행된 lp 토큰양
         int256 scalarRoot;
         uint256 expiry;
         uint256 lnFeeRateRoot;
-        uint256 reserveFeePercent; // base 100
         uint256 lastLnImpliedRate;
     }
 
@@ -36,64 +35,152 @@ contract SwapHook is BaseHook {
 
     constructor(IPoolManager _poolManager) BaseHook(_poolManager) {}
 
-    function getHookPermissions() public pure override returns (Hooks.Permissions memory) {
-        return Hooks.Permissions({
-            beforeInitialize: true, // true
-            afterInitialize: false,
-            beforeAddLiquidity: false,
-            afterAddLiquidity: false,
-            beforeRemoveLiquidity: false,
-            afterRemoveLiquidity: false,
-            beforeSwap: true, // true
-            afterSwap: false,
-            beforeDonate: false,
-            afterDonate: false,
-            beforeSwapReturnDelta: false,
-            afterSwapReturnDelta: false,
-            afterAddLiquidityReturnDelta: false,
-            afterRemoveLiquidityReturnDelta: false
-        });
+    function getHookPermissions()
+        public
+        pure
+        override
+        returns (Hooks.Permissions memory)
+    {
+        return
+            Hooks.Permissions({
+                beforeInitialize: true, // true
+                afterInitialize: false,
+                beforeAddLiquidity: false,
+                afterAddLiquidity: false,
+                beforeRemoveLiquidity: false,
+                afterRemoveLiquidity: false,
+                beforeSwap: true, // true
+                afterSwap: false,
+                beforeDonate: false,
+                afterDonate: false,
+                beforeSwapReturnDelta: false,
+                afterSwapReturnDelta: false,
+                afterAddLiquidityReturnDelta: false,
+                afterRemoveLiquidityReturnDelta: false
+            });
     }
 
-    function poolInitialize(PoolId poolId, int256 scalarRoot, int256 initialAnchor, uint80 lnFeeRateRoot) external {
+    function poolInitialize(
+        PoolId poolId,
+        int256 scalarRoot,
+        int256 initialAnchor,
+        uint80 lnFeeRateRoot
+    ) external {
         HookState storage hs = _pools[poolId];
     }
 
-    function beforeInitialize(address, PoolKey calldata key, uint160 sqrtPriceX96) external override returns (bytes4) {
+    function beforeInitialize(
+        address,
+        PoolKey calldata key,
+        uint160 sqrtPriceX96
+    ) external override returns (bytes4) {
         // TODO IMPLEMENT
         return BaseHook.beforeInitialize.selector;
     }
 
-    function beforeSwap(address, PoolKey calldata key, IPoolManager.SwapParams calldata swapParams, bytes calldata)
-        external
-        override
-        returns (bytes4, BeforeSwapDelta, uint24)
-    {
+    function beforeSwap(
+        address,
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata swapParams,
+        bytes calldata
+    ) external override returns (bytes4, BeforeSwapDelta, uint24) {
         PoolId id = key.toId();
         HookState memory hs = _pools[id];
         bool exactInput = swapParams.amountSpecified < 0;
-        (Currency specified, Currency unspecified) =
-            (swapParams.zeroForOne == exactInput) ? (key.currency0, key.currency1) : (key.currency1, key.currency0);
-        int256 specifiedAmount = exactInput ? -swapParams.amountSpecified : swapParams.amountSpecified;
+        (Currency specified, Currency unspecified) = (swapParams.zeroForOne ==
+            exactInput)
+            ? (key.currency0, key.currency1)
+            : (key.currency1, key.currency0);
+        int256 specifiedAmount = exactInput
+            ? -swapParams.amountSpecified
+            : swapParams.amountSpecified;
         int256 unspecifiedAmount;
         BeforeSwapDelta returnDelta;
         if (exactInput) {
-            unspecifiedAmount = _swap(hs, specified, unspecified, specifiedAmount, block.timestamp);
-            returnDelta = toBeforeSwapDelta(int128(specifiedAmount), int128(-unspecifiedAmount));
+            unspecifiedAmount = _swap(
+                hs,
+                specified,
+                unspecified,
+                specifiedAmount,
+                block.timestamp
+            );
+            returnDelta = toBeforeSwapDelta(
+                int128(specifiedAmount),
+                int128(-unspecifiedAmount)
+            );
         } else {
             // TODO FIX IT
-            unspecifiedAmount = _swap(hs, specified, unspecified, specifiedAmount, block.timestamp);
-            returnDelta = toBeforeSwapDelta(int128(-specifiedAmount), int128(unspecifiedAmount));
+            unspecifiedAmount = _swap(
+                hs,
+                specified,
+                unspecified,
+                specifiedAmount,
+                block.timestamp
+            );
+            returnDelta = toBeforeSwapDelta(
+                int128(-specifiedAmount),
+                int128(unspecifiedAmount)
+            );
         }
         return (BaseHook.beforeSwap.selector, returnDelta, 0);
     }
 
-    function _swap(HookState memory state, Currency specified, Currency unspectified, int256 amount, uint256 blockTime)
-        internal
-        pure
-        returns (int256)
-    {
+    function _swap(
+        HookState memory state,
+        Currency specified,
+        Currency unspectified,
+        int256 amount,
+        uint256 blockTime
+    ) internal pure returns (int256 netAssetToAccount, int256 fee) {
         uint256 timeToExpiry = state.expiry - blockTime; // 만기까지 남은 시간
+        int256 rateScalar = _getRateScalar(state.scalarRoot, timeToExpiry); // rateScalar 계산
+        int256 rateAnchor = _getRateAnchor(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            state.lastLnImpliedRate,
+            timeToExpiry
+        );
+        int256 feeRate = _getExchangeRateFromImpliedRate(
+            state.lnFeeRateRoot,
+            timeToExpiry
+        );
+
+        int256 exchangeRate = _getExchangeRate(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            rateAnchor,
+            amount
+        ); // 거래전 교환비율 계산
+
+        int256 assetToAccount = -((amount * 1e18) / exchangeRate); // ETH 이동량
+        int256 fee;
+        // calculate fee
+        if (amount > 0) {
+            // case of buy zct
+            require(((exchangeRate * 1e18) / feeRate) >= 1e18);
+            fee = (assetToAccount * (1e18 - feeRate)) / 1e18;
+        } else {
+            // case of sell zct
+            fee = -((assetToAccount * (1e18 - feeRate)) / feeRate);
+        }
+
+        netAssetToAccount = assetToAccount - fee;
+
+        state.totalZct = state.totalZct - amount;
+        state.totalAsset =
+            state.totalAsset -
+            (netEthToAccount + netEthToReserve);
+
+        state.lastLnImpliedRate = _getLnImpliedRate(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            rateAnchor,
+            timeToExpiry
+        );
+        require(state.lastLnImpliedRate != 0);
     }
 
     ///////////////////////////////// 이자율
@@ -101,15 +188,18 @@ contract SwapHook is BaseHook {
     // 기준 이자율 설정해주는 함수
     // 새로운 교환 비율 계산
     function _getRateAnchor(
-        int256 totalPt,
-        uint256 lastLnImpliedRate, // 이전 이자율
+        int256 totalZct,
         int256 totalAsset,
         int256 rateScalar,
+        uint256 lastLnImpliedRate, // 이전 이자율
         uint256 timeToExpiry
     ) internal pure returns (int256 rateAnchor) {
-        int256 newExchangeRate = _getExchangeRateFromImpliedRate(lastLnImpliedRate, timeToExpiry);
+        int256 newExchangeRate = _getExchangeRateFromImpliedRate(
+            lastLnImpliedRate,
+            timeToExpiry
+        );
 
-        int256 proportion = (totalPt * 1e18) / (totalPt + totalAsset);
+        int256 proportion = (totalZct * 1e18) / (totalZct + totalAsset);
 
         int256 lnProportion = _logProportion(proportion);
 
@@ -131,7 +221,13 @@ contract SwapHook is BaseHook {
         int256 rateAnchor,
         uint256 timeToExpiry
     ) internal pure returns (uint256 lnImpliedRate) {
-        int256 exchangeRate = _getExchangeRate(totalPt, totalAsset, rateScalar, rateAnchor, 0);
+        int256 exchangeRate = _getExchangeRate(
+            totalPt,
+            totalAsset,
+            rateScalar,
+            rateAnchor,
+            0
+        );
 
         uint256 lnRate = uint256(exchangeRate.ln());
         lnImpliedRate = (lnRate * IMPLIED_RATE_TIME) / timeToExpiry;
@@ -139,38 +235,39 @@ contract SwapHook is BaseHook {
 
     /// @notice Converts an implied rate to an exchange rate given a time to expiry. The
     /// formula is E = e^rt
-    function _getExchangeRateFromImpliedRate(uint256 lnImpliedRate, uint256 timeToExpiry)
-        internal
-        pure
-        returns (int256 exchangeRate)
-    {
+    function _getExchangeRateFromImpliedRate(
+        uint256 lnImpliedRate,
+        uint256 timeToExpiry
+    ) internal pure returns (int256 exchangeRate) {
         uint256 rt = (lnImpliedRate * timeToExpiry) / IMPLIED_RATE_TIME;
-
         exchangeRate = LogExpMath.exp(int256(rt));
     }
 
     /////////////////////////////////////////////// SCALAR
-    function _getRateScalar(int256 scalarRoot, uint256 timeToExpiry) internal pure returns (int256 rateScalar) {
+    function _getRateScalar(
+        int256 scalarRoot,
+        uint256 timeToExpiry
+    ) internal pure returns (int256 rateScalar) {
         rateScalar = (scalarRoot * IMPLIED_RATE_TIME) / timeToExpiry;
         require(rateScalar > 0, "rateScalar must be positive");
     }
 
     //     ///////////////////////
-    //     totalPt: 시장에 있는 총 PT 수량.
+    //     totalZct: 시장에 있는 총 PT 수량.
     // totalAsset: 시장에 있는 총 자산 수량.
     // rateScalar: 시장의 민감도를 조정하는 변수.
     // rateAnchor: 암묵적 이자율의 중심을 조정하는 변수.
-    // netPtToAccount: 거래로 인해 시장에서 이동할 PT의 순 양.
+    // netZctToAccount: 거래로 인해 시장에서 이동할 PT의 순 양.
     function _getExchangeRate(
         int256 totalZct,
-        int256 totalEth,
+        int256 totalAsset,
         int256 rateScalar,
         int256 rateAnchor,
         int256 netZctToAccount
     ) internal pure returns (int256 exchangeRate) {
         int256 numerator = totalZct - netZctToAccount;
 
-        int256 proportion = ((numerator * 1e18) / (totalZct + totalEth));
+        int256 proportion = ((numerator * 1e18) / (totalZct + totalAsset));
 
         require(proportion <= MAX_MARKET_PROPORTION);
 
@@ -178,5 +275,14 @@ contract SwapHook is BaseHook {
 
         exchangeRate = ((lnProportion * 1e18) / rateScalar) + rateAnchor;
         require(exchangeRate >= 1e18);
+    }
+
+    function _logProportion(
+        int256 proportion
+    ) internal pure returns (int256 res) {
+        require(proportion != 1e18);
+        int256 logitP = (proportion * 1e18) / (1e18 - proportion);
+
+        res = logitP.ln();
     }
 }

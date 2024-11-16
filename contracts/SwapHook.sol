@@ -295,6 +295,55 @@ contract SwapHook is BaseHook {
 
     // LIQUIDITY
 
+    function addLiquidity(
+        PoolKey calldata key,
+        uint256 zctAmountDesired,
+        uint256 assetAmountDesired
+    ) external {
+        poolManager.unlock(
+            abi.encodeCall(
+                this.handleAddLiquidity,
+                (key, zctAmountDesired, assetAmountDesired, msg.sender)
+            )
+        );
+    }
+
+    function handleAddLiquidity(
+        PoolKey calldata key,
+        uint256 zctAmountDesired,
+        uint256 assetAmountDesired,
+        address sender
+    ) external returns (bytes memory) {
+        PoolId id = key.toId();
+        HookState memory hs = _pools[id];
+
+        (
+            int256 liquidity,
+            int256 zctAmount,
+            int256 assetAmount
+        ) = _addLiquidity(
+                hs,
+                int256(zctAmountDesired),
+                int256(assetAmountDesired),
+                block.timestamp
+            );
+        // TODO settle take
+    }
+
+    function handleRemoveLiquidity(
+        PoolKey calldata key,
+        uint256 amount
+    ) external returns (bytes memory) {
+        PoolId id = key.toId();
+        HookState memory hs = _pools[id];
+        (int256 zctAmount, int256 assetAmount) = _removeLiquidity(
+            hs,
+            int256(amount)
+        );
+        // TODO settle take
+        
+    }
+
     function _addLiquidity(
         HookState memory state,
         int256 zctAmountDesired,

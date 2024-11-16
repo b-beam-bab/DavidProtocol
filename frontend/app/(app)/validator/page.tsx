@@ -1,15 +1,20 @@
+"use client";
+
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { IssueBondDialog } from "@/components/dialog/issue-bond-dialog";
-import { Suspense } from "react";
 import { CurrentBalanceCard } from "@/components/card/current-balance-card";
 import { TotalDepositCard } from "@/components/card/total-deposit-card";
 import { APYCard } from "@/components/card/apy-card";
 import { BondCard } from "@/components/card/bond-card";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ScrollBar } from "@/components/ui/scroll-area";
-import { MOCK_ISSUED_BONDS } from "@/mock/bond";
+import { useMyBondList } from "@/lib/hooks/use-my-bond-lists";
+import { useAccount } from "wagmi";
 
 export default function ValidatorPage() {
+  const { address } = useAccount();
+  const { myBonds } = useMyBondList(address);
+
   return (
     <div className="pt-4">
       <div className="flex items-center justify-center  h-[236px] bg-gradient-to-r from-[#DAC2D8] to-[#F6EAF5]">
@@ -38,7 +43,7 @@ export default function ValidatorPage() {
 
           <ScrollArea className="overflow-auto w-full whitespace-nowrap rounded-lg border">
             <div className="flex gap-4 p-4">
-              {MOCK_ISSUED_BONDS.map((bond) => (
+              {myBonds.map((bond) => (
                 <BondCard key={bond.maturity} bond={bond} />
               ))}
 

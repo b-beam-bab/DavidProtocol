@@ -24,10 +24,19 @@ import {
 import { Bond, TransactionState } from "@/lib/types";
 import { ErrorIcon, SuccessIcon } from "../svg";
 import { useAvailableBonds } from "@/lib/hooks/use-available-bonds";
-import { useAccount } from "wagmi";
-import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
+import {
+  type BaseError,
+  useAccount,
+  useWaitForTransactionReceipt,
+  useWriteContract,
+} from "wagmi";
+import {
+  useDepositAmount,
+  useStakingModule,
+} from "@/lib/hooks/use-deposit-amount";
 import { useBondBalance } from "@/lib/hooks/use-bond-balance";
-import { formatEther } from "viem";
+import { formatEther, parseEther } from "viem";
+import { abi as smAbi } from "@/abi/staking-module";
 
 export function IssueBondDialog() {
   const [isOpen, setIsOpen] = React.useState(false);
@@ -35,9 +44,31 @@ export function IssueBondDialog() {
   const [selectedBond, setSelectedBond] = React.useState<Bond | null>(null);
   const [amount, setAmount] = React.useState(0);
   const [txState, setTxState] = React.useState<TransactionState>("idle");
-  const [error, setError] = React.useState("");
+
+  const { data: hash, isPending, error, writeContract } = useWriteContract();
+  const { isLoading: isConfirming, isSuccess: isConfirmed } =
+    useWaitForTransactionReceipt({
+      hash,
+    });
+
+  React.useEffect(() => {
+    if (isPending || isConfirming) {
+      setTxState("loading");
+    } else if (isConfirmed) {
+      setTxState("success");
+      const timer = setTimeout(() => {
+        setIsOpen(false);
+        setAmount(0);
+        setTxState("idle");
+      }, 2000); // Added explicit timeout
+      return () => clearTimeout(timer); // Cleanup timeout
+    } else if (error) {
+      setTxState("error");
+    }
+  }, [isPending, isConfirming, isConfirmed, error]);
 
   const { address } = useAccount();
+  const { stakingModuleAddress } = useStakingModule(address);
   const { balance: depositInGwei } = useDepositAmount(address);
   const { balance: bondBalanceInGwei } = useBondBalance(address);
 
@@ -52,7 +83,6 @@ export function IssueBondDialog() {
     setSelectedBond(null);
     setAmount(0);
     setTxState("idle");
-    setError("");
   };
 
   const handleClose = () => {
@@ -60,26 +90,24 @@ export function IssueBondDialog() {
     resetDialog();
   };
 
-  const processTransaction = async () => {
+  const processTransaction = async (e: any) => {
+    e.preventDefault();
+
     setTxState("loading");
-    try {
-      // Simulate API call
-      await new Promise((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() > 0.2) {
-            resolve(true);
-          } else {
-            reject(new Error("Transaction failed"));
-          }
-        }, 2000);
-      });
-      setTxState("success");
-      // Reset after success
-      setTimeout(handleClose, 2000);
-    } catch (err) {
+
+    if (!stakingModuleAddress) {
       setTxState("error");
-      setError(err instanceof Error ? err.message : "Transaction failed");
+      return;
     }
+
+    const amountInGwei = parseEther(amount.toString());
+
+    writeContract({
+      address: stakingModuleAddress,
+      abi: smAbi,
+      functionName: "mintBond",
+      args: [selectedBond!.address, amountInGwei],
+    });
   };
 
   const renderContent = () => {
@@ -113,7 +141,9 @@ export function IssueBondDialog() {
           <div className="rounded-full bg-destructive/10 p-3">
             <ErrorIcon />
           </div>
-          <p className="text-center text-destructive">{error}</p>
+          <p className="text-center text-destructive">
+            {(error as BaseError).shortMessage || error?.message}
+          </p>
           <Button variant="outline" onClick={() => setTxState("idle")}>
             Try Again
           </Button>

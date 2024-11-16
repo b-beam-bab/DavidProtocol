@@ -38,7 +38,7 @@ export const BondCard = ({ bond }: { bond: Bond & { amount: number } }) => {
         </div>
       </CardContent>
       <CardFooter>
-        <Link href={`/market/${bond.maturityDate}`}>
+        <Link className="w-full" href={`/market/${bond.maturityDate}`}>
           <Button variant="outline" className="w-full">
             View Details
           </Button>

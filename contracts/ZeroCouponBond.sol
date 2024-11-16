@@ -20,16 +20,12 @@ interface IssuerInfo {
 }
 
 contract ZeroCouponBond is ERC20, IZeroCouponBond {
-    uint256 constant MAX_ISSUERS_COUNT = 2 ** 27;
     uint256 constant MAX_PENDING_WITHDRAWAL_COUNT = 2 ** 27;
     uint256 constant MAX_PENDING_WITHDRAWAL_PER_CALL = 100;
 
     IStakingModuleManager public stakingModuleManager;
     uint256 public marginRatio;
-    uint256 public maturityBlock;
-
-    // uint256 public issueCount;
-    // address[MAX_ISSUERS_COUNT] issuers;
+    uint256 public maturity;
 
     mapping(address => IssuerInfo) issuers;
 
@@ -44,11 +40,16 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     ) ERC20("Zero Coupon Bond", "ZCB") {
         stakingModuleManager = _stakingModuleManager;
         marginRatio = _marginRatio;
-        maturityBlock = block.number + _duration;
+        maturity = block.timestamp + _duration;
+    }
+
+    modifier expired() {
+        require(maturity >= block.timestamp, "This bond is not expired");
+        _;
     }
 
     modifier notExpired() {
-        require(maturityBlock < block.number, "This bond is expired");
+        require(maturity < block.timestamp, "This bond is expired");
         _;
     }
 
@@ -63,9 +64,7 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         issuers[to].margin += margin;
     }
 
-    function redeem() external {
-        require(block.number > maturityBlock, "Bond has not been expired");
-
+    function redeem() external expired {
         uint256 bondBalance = balanceOf(msg.sender);
         require(bondBalance > 0, "No balance to redeem");
 
@@ -74,26 +73,44 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         Address.sendValue(payable(msg.sender), bondBalance);
     }
 
-    function earlyRepayment() external {
+    function earlyRepayment() external notExpired {
         require(msg.value > 0, "Invalid value");
-        require(block.number < maturityBlock, "Bond had been expired");
 
-        uint256 collateral = collaterals[msg.sender];
-        require(collateral > 0, "No debt to repay");
+        require(issuers[msg.sender].collateral > 0, "No debt to repay");
 
-        if (collateral >= msg.value) {
-            collaterals[msg.sender] -= msg.value;
+        if (issuers[msg.sender].collateral >= msg.value) {
+            issuers[msg.sender].collateral -= msg.value;
         } else {
-            collaterals[msg.sender] = 0;
+            issuers[msg.sender].collateral = 0;
         }
+    }
+
+    function secureFundsForValidator(
+        address validator,
+        bytes calldata proof
+    ) external {
+        bool needToLiqudate = verifyLiquidation(proof);
+        require(
+            needToLiqudate,
+            "Not meet the conditions required for liquidation"
+        );
+
+        uint256 penalty = verifyPenalty(proof);
+        IssuerInfo issuerInfo = issuers[validator];
+
+        uint256 amountToWithdraw = issuerInfo.principal + issuerInfo.margin;
+        uint256 amountToLiquidate = issuerInfo.collateral + penalty;
+
+        issuers[validator] = IssuerInfo(0, 0, 0);
+        createWithdrawalRequest(validator, amountToWithdraw, amountToLiquidate);
     }
 
     function createWithdrawalRequest(
         address recipient,
         uint256 amountToWithdraw,
         uint256 amountToRefund
-    ) {
-        IStakingModule(recipient).createWithdrawal(amount);
+    ) internal {
+        IStakingModule(recipient).createWithdrawal(amountToWithdraw);
         PendingWithdrawal p = PendingWithdrawal(
             recipient,
             amountToWithdraw,
@@ -132,26 +149,6 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
             pendingWithdrawalsHead = 0;
             pendingWithdrawalsTail = 0;
         }
-    }
-
-    function secureFundsForValidator(
-        address validator,
-        bytes calldata proof
-    ) external {
-        bool needToLiqudate = verifyLiquidation(proof);
-        require(
-            needToLiqudate,
-            "Not meet the conditions required for liquidation"
-        );
-
-        uint256 penalty = verifyPenalty(proof);
-        IssuerInfo issuerInfo = issuers[validator];
-
-        uint256 amountToWithdraw = issuerInfo.principal + issuerInfo.margin;
-        uint256 amountToLiquidate = issuerInfo.collateral + penalty;
-
-        issuers[validator] = IssuerInfo(0, 0, 0);
-        createWithdrawalRequest(validator, amountToWithdraw, amountToLiquidate);
     }
 
     function getFaceValue() external view returns (uint256) {}

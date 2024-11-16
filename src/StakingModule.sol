@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.13;
 
+import "@openzeppelin/contracts/utils/Address.sol";
+
 import "./interfaces/IDepositContract.sol";
 import "./interfaces/IStakingModuleManager.sol";
 
@@ -8,7 +10,10 @@ contract StakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
     address public immutable owner;
-    uint256 private _balance;
+    uint256 private _totalBalance;
+    uint256 private _totalLockedBalance;
+    mapping(address => uint256) private _lockedBalances;
+    mapping(address => uint256) private _withdrawableBalances;
 
     constructor(
         IDepositContract _depositContract,
@@ -21,9 +26,14 @@ contract StakingModule {
     }
 
     modifier onlyStakingModuleManager() {
+        require(msg.sender == address(stakingModuleManager), "Invalid caller");
+        _;
+    }
+
+    modifier onlyOwner() {
         require(
-            msg.sender == address(stakingModuleManager),
-            "StakigModule::onlyStakingModuleManager - Invalid caller"
+            msg.sender == address(owner),
+            "StakigModule::onlyOwner - Invalid caller"
         );
         _;
     }
@@ -58,11 +68,50 @@ contract StakingModule {
         // 2. In the current spec(dencun), additional deposits are meaningless as it will be withdrawed eventually.
         //    However, effective active balance can grows after the pectra update, so the accumulation of balance will become meaningful.
         //    Considering this, the new deposit will be added to the existing balance.
-        _balance += msg.value;
+        _lockBalance(owner, msg.value);
+
+        _totalBalance += msg.value;
     }
 
-    function createWithdrawal() external {}
-    function completeWithdrawal() external {}
+    function lockBalance(address recipent, uint256 amount) public {
+        require(
+            amount <= _lockedBalances[owner],
+            "Insufficient balance to lock"
+        );
+        _lockBalance(recipent, amount);
+        _lockedBalances[owner] -= amount;
+    }
+
+    function _lockBalance(address recipent, uint256 amount) internal {
+        _lockedBalances[recipent] += amount;
+        _totalLockedBalance += amount;
+    }
+
+    function _unlockBalance(address recipent, uint256 amount) internal {
+        uint256 lockedBalance = _lockedBalances[recipent];
+        require(
+            amount <= lockedBalance,
+            "Insufficient balance to process withdrawal request"
+        );
+
+        _lockedBalances[recipent] -= amount;
+        _totalLockedBalance -= amount;
+
+        _withdrawableBalances[recipent] += amount;
+    }
+
+    function createWithdrawal(uint256 amount) external {
+        require(amount > 0, "Invalid amount");
+        _unlockBalance(msg.sender, amount);
+    }
+
+    function completeWithdrawal() external {
+        uint256 withdrawableBalance = _withdrawableBalances[msg.sender];
+        require(withdrawableBalance > 0, "No withdrawable balance");
+
+        _withdrawableBalances[msg.sender] = 0;
+        Address.sendValue(payable(msg.sender), withdrawableBalance);
+    }
 
     function _getWithdrawalCredentials() internal view returns (bytes memory) {
         return abi.encodePacked(bytes1(uint8(1)), bytes11(0), address(this));

@@ -8,13 +8,16 @@ import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IZeroCouponBond.sol";
 
 contract ZeroCouponBond is ERC20, IZeroCouponBond {
+    uint256 constant MAX_ISSUERS_COUNT = 2 ** 27;
     IStakingModuleManager public stakingModuleManager;
     uint256 public marginRatio;
     uint256 public maturityBlock;
 
-    uint256 public issueCount;
+    // uint256 public issueCount;
+    // address[MAX_ISSUERS_COUNT] issuers;
 
     mapping(address => uint256) margins;
+    mapping(address => uint256) collaterals;
 
     constructor(
         IStakingModuleManager _stakingModuleManager,
@@ -34,7 +37,10 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
     // TODO: Add modifier checking valid caller
     function mint(address to, uint256 amount) external notExpired {
         uint256 margin = amount * marginRatio;
-        _mint(to, amount - margin);
+        uint256 collateral = amount - margin;
+        _mint(to, collateral);
+
+        collaterals[to] += collateral;
         margins[to] += margin;
     }
 
@@ -49,9 +55,20 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         Address.sendValue(payable(msg.sender), bondBalance);
     }
 
-    function earlyRepayment(uint256 amount) external {
+    function earlyRepayment() external {
+        require(msg.value > 0, "Invalid value");
         require(block.number < maturityBlock, "Bond had been expired");
+
+        uint256 collateral = collaterals[msg.sender];
+        require(collateral > 0, "No debt to repay");
+
+        if (collateral >= msg.value) {
+            collaterals[msg.sender] -= msg.value;
+        } else {
+            collaterals[msg.sender] = 0;
+        }
     }
+
     function requestWithdrawalForValidator(uint256 amount) external {}
     function secureFundsForValidator(
         address validator,

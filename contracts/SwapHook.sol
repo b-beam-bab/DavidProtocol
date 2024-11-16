@@ -12,7 +12,6 @@ import {BalanceDelta} from "v4-core/src/types/BalanceDelta.sol";
 import {BeforeSwapDelta, BeforeSwapDeltaLibrary, toBeforeSwapDelta} from "v4-core/src/types/BeforeSwapDelta.sol";
 
 import {Math} from "./libraries/Math.sol";
-
 import {LogExpMath} from "./libraries/LogExpMath.sol";
 
 contract SwapHook is BaseHook {
@@ -139,6 +138,107 @@ contract SwapHook is BaseHook {
         return (BaseHook.beforeSwap.selector, returnDelta, 0);
     }
 
+    function addLiquidity(
+        PoolKey calldata key,
+        uint256 zctAmountDesired,
+        uint256 assetAmountDesired
+    ) external {
+        poolManager.unlock(
+            abi.encodeCall(
+                this.handleAddLiquidity,
+                (key, zctAmountDesired, assetAmountDesired, msg.sender)
+            )
+        );
+    }
+
+    function handleAddLiquidity(
+        PoolKey calldata key,
+        uint256 zctAmountDesired,
+        uint256 assetAmountDesired,
+        address sender
+    ) external returns (bytes memory) {
+        PoolId id = key.toId();
+        HookState memory hs = _pools[id];
+
+        (
+            int256 liquidity,
+            int256 zctAmount,
+            int256 assetAmount
+        ) = _addLiquidity(
+                hs,
+                int256(zctAmountDesired),
+                int256(assetAmountDesired),
+                block.timestamp
+            );
+        // TODO settle take
+    }
+    function handleRemoveLiquidity(
+        PoolKey calldata key,
+        uint256 amount
+    ) external returns (bytes memory) {
+        PoolId id = key.toId();
+        HookState memory hs = _pools[id];
+        (int256 zctAmount, int256 assetAmount) = _removeLiquidity(
+            hs,
+            int256(amount)
+        );
+        // TODO settle take
+    }
+
+    // INTERNAL FUNCTIONS
+
+    function _addLiquidity(
+        HookState memory state,
+        int256 zctAmountDesired,
+        int256 assetAmountDesired,
+        uint256 blockTime
+    )
+        internal
+        returns (int256 liquidity, int256 zctAmount, int256 assetAmount)
+    {
+        liquidity;
+        if (state.totalLiquidity == 0) {
+            liquidity =
+                int256(
+                    Math.sqrt(uint256(assetAmountDesired * zctAmountDesired))
+                ) -
+                MINIMUM_LIQUIDITY;
+        } else {
+            int256 liquidityZct = (zctAmountDesired * state.totalLiquidity) /
+                state.totalZct;
+            int256 liquidityAsset = (assetAmountDesired *
+                state.totalLiquidity) / state.totalAsset;
+            if (liquidityZct < liquidityAsset) {
+                liquidity = liquidityZct;
+                zctAmount = zctAmountDesired;
+                assetAmount =
+                    (state.totalAsset * liquidity) /
+                    state.totalLiquidity;
+            } else {
+                liquidity = liquidityAsset;
+                zctAmount = (state.totalZct * liquidity) / state.totalLiquidity;
+                assetAmount = assetAmountDesired;
+            }
+        }
+
+        require(liquidity > 0 && assetAmount > 0 && zctAmount > 0);
+        state.totalAsset += assetAmount;
+        state.totalZct += zctAmount;
+        state.totalLiquidity += liquidity;
+    }
+
+    function _removeLiquidity(
+        HookState memory state,
+        int256 amount
+    ) internal returns (int256 zctAmount, int256 assetAmount) {
+        zctAmount = (amount * state.totalZct) / state.totalLiquidity;
+        assetAmount = (amount * state.totalAsset) / state.totalLiquidity;
+        require(zctAmount != 0 || assetAmount != 0);
+        state.totalLiquidity -= amount;
+        state.totalAsset -= assetAmount;
+        state.totalZct -= zctAmount;
+    }
+
     function _swap(
         HookState memory state,
         Currency specified,
@@ -193,8 +293,6 @@ contract SwapHook is BaseHook {
         );
         require(state.lastLnImpliedRate != 0);
     }
-
-    ///////////////////////////////// 이자율
 
     // 기준 이자율 설정해주는 함수
     // 새로운 교환 비율 계산
@@ -299,109 +397,7 @@ contract SwapHook is BaseHook {
         res = logitP.ln();
     }
 
-    // LIQUIDITY
-
-    function addLiquidity(
-        PoolKey calldata key,
-        uint256 zctAmountDesired,
-        uint256 assetAmountDesired
-    ) external {
-        poolManager.unlock(
-            abi.encodeCall(
-                this.handleAddLiquidity,
-                (key, zctAmountDesired, assetAmountDesired, msg.sender)
-            )
-        );
-    }
-
-    function handleAddLiquidity(
-        PoolKey calldata key,
-        uint256 zctAmountDesired,
-        uint256 assetAmountDesired,
-        address sender
-    ) external returns (bytes memory) {
-        PoolId id = key.toId();
-        HookState memory hs = _pools[id];
-
-        (
-            int256 liquidity,
-            int256 zctAmount,
-            int256 assetAmount
-        ) = _addLiquidity(
-                hs,
-                int256(zctAmountDesired),
-                int256(assetAmountDesired),
-                block.timestamp
-            );
-        // TODO settle take
-    }
-
-    function handleRemoveLiquidity(
-        PoolKey calldata key,
-        uint256 amount
-    ) external returns (bytes memory) {
-        PoolId id = key.toId();
-        HookState memory hs = _pools[id];
-        (int256 zctAmount, int256 assetAmount) = _removeLiquidity(
-            hs,
-            int256(amount)
-        );
-        // TODO settle take
-    }
-
-    function _addLiquidity(
-        HookState memory state,
-        int256 zctAmountDesired,
-        int256 assetAmountDesired,
-        uint256 blockTime
-    )
-        internal
-        returns (int256 liquidity, int256 zctAmount, int256 assetAmount)
-    {
-        liquidity;
-        if (state.totalLiquidity == 0) {
-            liquidity =
-                int256(
-                    Math.sqrt(uint256(assetAmountDesired * zctAmountDesired))
-                ) -
-                MINIMUM_LIQUIDITY;
-        } else {
-            int256 liquidityZct = (zctAmountDesired * state.totalLiquidity) /
-                state.totalZct;
-            int256 liquidityAsset = (assetAmountDesired *
-                state.totalLiquidity) / state.totalAsset;
-            if (liquidityZct < liquidityAsset) {
-                liquidity = liquidityZct;
-                zctAmount = zctAmountDesired;
-                assetAmount =
-                    (state.totalAsset * liquidity) /
-                    state.totalLiquidity;
-            } else {
-                liquidity = liquidityAsset;
-                zctAmount = (state.totalZct * liquidity) / state.totalLiquidity;
-                assetAmount = assetAmountDesired;
-            }
-        }
-
-        require(liquidity > 0 && assetAmount > 0 && zctAmount > 0);
-        state.totalAsset += assetAmount;
-        state.totalZct += zctAmount;
-        state.totalLiquidity += liquidity;
-    }
-
-    function _removeLiquidity(
-        HookState memory state,
-        int256 amount
-    ) internal returns (int256 zctAmount, int256 assetAmount) {
-        zctAmount = (amount * state.totalZct) / state.totalLiquidity;
-        assetAmount = (amount * state.totalAsset) / state.totalLiquidity;
-        require(zctAmount != 0 || assetAmount != 0);
-        state.totalLiquidity -= amount;
-        state.totalAsset -= assetAmount;
-        state.totalZct -= zctAmount;
-    }
-
-    function setInitialLnImpliedRate(
+    function _setInitialLnImpliedRate(
         HookState memory state,
         int256 initialAnchor,
         uint256 blockTime

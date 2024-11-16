@@ -62,7 +62,7 @@ contract StakingModuleManager is IStakingModuleManager {
                 bytes32(uint256(uint160(msg.sender))),
                 abi.encodePacked(
                     type(StakingModule).creationCode,
-                    abi.encode(depositContract, address(this))
+                    abi.encode(depositContract, address(this), msg.sender)
                 )
             )
         );

@@ -59,7 +59,7 @@ export default function Onboarding() {
           </Card>
 
           <Card className="relative overflow-hidden transition-colors hover:bg-accent/90">
-            <Link href="/operator" className="block p-6">
+            <Link href="/validator" className="block p-6">
               <CardHeader className="pb-2">
                 <CardTitle className="text-2xl">Become a Validator</CardTitle>
                 <CardDescription className="text-base">

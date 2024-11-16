@@ -1,6 +1,13 @@
 import { Wallet } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
 import { getEthPrice } from "@/lib/price";
+import { AddDepositDialog } from "../dialog/add-deposit-dialog";
 
 type TotalDepositCardProps = {
   totalDeposit: number;
@@ -19,8 +26,13 @@ export const TotalDepositCard = async ({
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{totalDeposit} ETH</div>
-        <p className="text-xs text-muted-foreground">≈ ${price * 25} USD</p>
+        <p className="text-xs text-muted-foreground">
+          ≈ ${price * totalDeposit} USD
+        </p>
       </CardContent>
+      <CardFooter>
+        <AddDepositDialog />
+      </CardFooter>
     </Card>
   );
 };

@@ -1,76 +1,67 @@
-import { Wallet, FileText } from "lucide-react";
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { AddDepositDialog } from "@/components/dialog/add-deposit-dialog";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { IssueBondDialog } from "@/components/dialog/issue-bond-dialog";
+import { Suspense } from "react";
+import { CurrentBalanceCard } from "@/components/card/current-balance-card";
+import { TotalDepositCard } from "@/components/card/total-deposit-card";
+import { APYCard } from "@/components/card/apy-card";
+import { BondCard } from "@/components/card/bond-card";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { ScrollBar } from "@/components/ui/scroll-area";
+import { MOCK_ISSUED_BONDS } from "@/mock/bond";
 
 export default function ValidatorPage() {
+  const totalEthBalance = 30;
   const deposit = 20;
   const availableDeposit = 10;
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold mb-2">Operator Actions</h1>
-        <p className="text-lg text-muted-foreground">
-          As an operator, you can perform two key actions: deposit ETH to become
-          a validator, and issue bonds against your deposit.
-        </p>
+    <div className="pt-4">
+      <div className="flex items-center justify-center  h-[236px] bg-gradient-to-r from-[#DAC2D8] to-[#F6EAF5]">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2">Validator</h1>
+          <p className="text-lg text-muted-foreground">
+            As an validator, you can perform two key actions: deposit ETH to
+            become a validator, and issue bonds against your deposit.
+          </p>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Deposit Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Wallet className="h-5 w-5" />
-              Deposit
-            </CardTitle>
-            <CardDescription>Deposit ETH to become a validator</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{deposit} ETH</p>
-            <p className="text-sm text-muted-foreground">
-              Current deposit amount
-            </p>
-          </CardContent>
-          <CardFooter>
-            <AddDepositDialog />
-          </CardFooter>
-        </Card>
+      <div className="mx-auto pt-8 pb-[100px] px-[108px] bg-white">
+        {/* Stats Cards */}
+        <div className="mb-8 grid gap-4 md:grid-cols-3">
+          <Suspense>
+            <CurrentBalanceCard totalEth={totalEthBalance} />
+          </Suspense>
+          <Suspense>
+            <TotalDepositCard totalDeposit={deposit} />
+          </Suspense>
+          <APYCard />
+        </div>
 
-        {/* Issue Bond Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Issue Bond
-            </CardTitle>
-            <CardDescription>
-              Issue a new bond against your deposit
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">
-              {availableDeposit > 0 ? "Ready to Issue" : "Deposit Required"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {availableDeposit > 0
-                ? "You can now issue bonds"
-                : "Make a deposit to issue bonds"}
-            </p>
-          </CardContent>
-          <CardFooter>
-            <IssueBondDialog availableDeposit={availableDeposit} />
-          </CardFooter>
-        </Card>
+        {/* Issued Bonds Section */}
+        <div className="space-y-4 max-w-[1280px] mx-auto">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold">Issued Bonds</h2>
+          </div>
+
+          <ScrollArea className="overflow-auto w-full whitespace-nowrap rounded-lg border">
+            <div className="flex gap-4 p-4">
+              {MOCK_ISSUED_BONDS.map((bond) => (
+                <BondCard key={bond.id} bond={bond} />
+              ))}
+
+              {/* Issue New Bond Card */}
+              <Card className="flex w-[300px] shrink-0 items-center justify-center">
+                <CardContent className="flex flex-col items-center justify-center py-8 w-full">
+                  <CardFooter>
+                    <IssueBondDialog availableDeposit={availableDeposit} />
+                  </CardFooter>
+                </CardContent>
+              </Card>
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );

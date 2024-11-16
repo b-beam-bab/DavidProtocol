@@ -1,4 +1,4 @@
-import { Wallet } from "lucide-react";
+import { CircleDollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { getEthPrice } from "@/lib/price";
 
@@ -15,11 +15,13 @@ export const CurrentBalanceCard = async ({
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
-        <Wallet className="h-4 w-4 text-muted-foreground" />
+        <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{totalEth} ETH</div>
-        <p className="text-xs text-muted-foreground">≈ ${price * 25} USD</p>
+        <p className="text-xs text-muted-foreground">
+          ≈ ${price * totalEth} USD
+        </p>
       </CardContent>
     </Card>
   );

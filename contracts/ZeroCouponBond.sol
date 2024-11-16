@@ -7,8 +7,16 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IZeroCouponBond.sol";
 
+interface PendingWithdrawal {
+    address withdrawalCredential;
+    uint256 amount;
+}
+
 contract ZeroCouponBond is ERC20, IZeroCouponBond {
     uint256 constant MAX_ISSUERS_COUNT = 2 ** 27;
+    uint256 constant MAX_PENDING_WITHDRAWAL_COUNT = 2 ** 27;
+    uint256 constant MAX_PENDING_WITHDRAWAL_PER_CALL = 1000;
+
     IStakingModuleManager public stakingModuleManager;
     uint256 public marginRatio;
     uint256 public maturityBlock;
@@ -18,6 +26,10 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
 
     mapping(address => uint256) margins;
     mapping(address => uint256) collaterals;
+
+    uint256 pendingWithdrawalsHead;
+    uint256 pendingWithdrawalsTail;
+    PendingWithdrawal[MAX_PENDING_WITHDRAWAL_COUNT] pendingWithdrawals;
 
     constructor(
         IStakingModuleManager _stakingModuleManager,
@@ -69,7 +81,37 @@ contract ZeroCouponBond is ERC20, IZeroCouponBond {
         }
     }
 
-    function requestWithdrawalForValidator(uint256 amount) external {}
+    // TODO: An entity to have eligibility to run this funcion will be determined in the future
+    function requestWithdrawalForValidator(
+        address recipient,
+        uint256 amount
+    ) external {
+        IStakingModule(recipient).createWithdrawal(amount);
+
+        PendingWithdrawal p = PendingWithdrawal(recipient, amount);
+        pendingWithdrawals[pendingWithdrawalsTail] = p;
+        pendingWithdrawalsTail++;
+    }
+
+    // TODO: An entity to have eligibility to run this funcion will be determined in the future
+    function completePendingWithdrawals() external {
+        uint256 count;
+        for (
+            uint256 pos = pendingWithdrawalsHead;
+            pos < pendingWithdrawalsTail;
+            pos++
+        ) {
+            if (count >= MAX_PENDING_WITHDRAWAL_COUNT) {
+                break;
+            }
+
+            PendingWithdrawal p = pendingWithdrawals[pos];
+            IStakingModule(p.withdrawalCredential).completeWithdrawal();
+        }
+
+        pendingWithdrawalsHead += count;
+    }
+
     function secureFundsForValidator(
         address validator,
         string calldata proof

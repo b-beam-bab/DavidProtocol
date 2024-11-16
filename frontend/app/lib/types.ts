@@ -11,3 +11,5 @@ export type Bond = {
   fixedAPY: number;
   price: number;
 };
+
+export type TransactionState = "idle" | "loading" | "success" | "error";

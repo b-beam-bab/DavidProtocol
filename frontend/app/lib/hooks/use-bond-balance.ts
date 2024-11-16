@@ -3,5 +3,5 @@ export const useBondBalance = (address: string | undefined) => {
     return false;
   }
   console.log("useBondBalance", address);
-  return true;
+  return false;
 };

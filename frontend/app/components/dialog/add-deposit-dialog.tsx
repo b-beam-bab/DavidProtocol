@@ -14,8 +14,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
-type TransactionState = "idle" | "loading" | "success" | "error";
+import { TransactionState } from "@/lib/types";
+import { ErrorIcon, SuccessIcon } from "../svg";
 
 export function AddDepositDialog() {
   const [amount, setAmount] = React.useState("");
@@ -30,7 +30,7 @@ export function AddDepositDialog() {
       // Simulate API call
       await new Promise((resolve, reject) => {
         setTimeout(() => {
-          if (Math.random() > 0.5) {
+          if (Math.random() > 0.2) {
             resolve(true);
           } else {
             reject(new Error("Transaction failed"));
@@ -135,37 +135,3 @@ export function AddDepositDialog() {
     </Dialog>
   );
 }
-
-const SuccessIcon = () => (
-  <svg
-    className="h-6 w-6 text-primary"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M5 13l4 4L19 7"
-    />
-  </svg>
-);
-
-SuccessIcon.displayName = "SuccessIcon";
-
-const ErrorIcon = () => (
-  <svg
-    className="h-6 w-6 text-destructive"
-    fill="none"
-    stroke="currentColor"
-    viewBox="0 0 24 24"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth="2"
-      d="M6 18L18 6M6 6l12 12"
-    />
-  </svg>
-);

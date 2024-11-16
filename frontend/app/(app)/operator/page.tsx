@@ -1,7 +1,3 @@
-"use client";
-
-// import { useState } from "react";
-
 import { Wallet, FileText } from "lucide-react";
 
 import {
@@ -16,7 +12,8 @@ import { AddDepositDialog } from "@/components/dialog/add-deposit-dialog";
 import { IssueBondDialog } from "@/components/dialog/issue-bond-dialog";
 
 export default function OperatorPage() {
-  const deposit = 0;
+  const deposit = 20;
+  const availableDeposit = 10;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -62,16 +59,16 @@ export default function OperatorPage() {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {deposit > 0 ? "Ready to Issue" : "Deposit Required"}
+              {availableDeposit > 0 ? "Ready to Issue" : "Deposit Required"}
             </p>
             <p className="text-sm text-muted-foreground">
-              {deposit > 0
+              {availableDeposit > 0
                 ? "You can now issue bonds"
                 : "Make a deposit to issue bonds"}
             </p>
           </CardContent>
           <CardFooter>
-            <IssueBondDialog disabled={deposit === 0} />
+            <IssueBondDialog availableDeposit={availableDeposit} />
           </CardFooter>
         </Card>
       </div>

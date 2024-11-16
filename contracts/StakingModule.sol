@@ -8,7 +8,7 @@ import "./interfaces/IStakingModule.sol";
 import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IZeroCouponBond.sol";
 
-contract StakingModule is IStakingModule {
+contract StakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
     address public immutable owner;
@@ -101,7 +101,7 @@ contract StakingModule is IStakingModule {
         require(amount <= lockedBalance, "Insufficient locked balance");
 
         _lockedBalances[msg.sender] -= amount;
-        zcbContract.mint(amount);
+        zcbContract.mint(msg.sender, amount);
         _lockedBalances[address(zcbContract)] += amount;
     }
 

@@ -60,9 +60,6 @@ const BondTableHeader = ({
           </Button>
         </TableHead>
         <TableHead>
-          <div className="font-semibold">Maturity Value</div>
-        </TableHead>
-        <TableHead>
           <div className="font-semibold">Fixed APY</div>
         </TableHead>
         <TableHead>
@@ -93,15 +90,16 @@ type BondTableRowProps = {
 
 const BondTableRow = ({ bond }: BondTableRowProps) => {
   const daysRemaining = Math.ceil(
-    (bond.maturityDate - new Date().getTime()) / DAY_IN_MS
+    (bond.maturity - new Date().getTime()) / DAY_IN_MS
   );
+  const fixedAPY = ((1 / bond.price - 1) * 100).toFixed(2);
 
   return (
-    <TableRow key={bond.id} className="">
+    <TableRow key={bond.maturity} className="">
       <TableCell>
         <div className="flex gap-[12px] items-center">
           <div>
-            {new Date(bond.maturityDate).toLocaleDateString("en-US", {
+            {new Date(bond.maturity).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
               day: "numeric",
@@ -113,21 +111,18 @@ const BondTableRow = ({ bond }: BondTableRowProps) => {
         </div>
       </TableCell>
       <TableCell>
-        <div className="font-medium">${bond.liquidity}M</div>
-      </TableCell>
-      <TableCell>
-        <div className="font-medium">{bond.maturityValue}</div>
+        <div className="font-medium">{bond.totalSupply} ETH</div>
       </TableCell>
       <TableCell>
         <div className="rounded-md bg-accent/30 px-2 py-1 text-accent-foreground inline-block">
-          {bond.fixedAPY}%
+          {fixedAPY}%
         </div>
       </TableCell>
       <TableCell>
-        <div className="font-medium">${bond.price}</div>
+        <div className="font-medium">${bond.price.toFixed(2)}</div>
       </TableCell>
       <TableCell>
-        <Link className="w-full" href={`/market/${bond.maturityDate}`}>
+        <Link className="w-full" href={`/market/${bond.maturity}`}>
           <Button className="w-full rounded-[40px]">Trade</Button>
         </Link>
       </TableCell>

@@ -57,7 +57,7 @@ export const useAvailableBonds = (): {
         : "0", // 18 decimals
       maturity: Number(data?.[baseIndex + 2].result as bigint) * 1000, // timestamp
       name: String(data?.[baseIndex + 3].result),
-      price: 0.95, // Fixed price
+      price: 0.9 + Math.random() * 0.1, // Random price
     };
   });
 

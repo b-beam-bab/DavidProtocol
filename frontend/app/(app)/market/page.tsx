@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { BondTableHeader, BondTableRow } from "@/components/table/bond-table";
-import { MOCK_BONDS } from "@/mock/bond";
+import { useAvailableBonds } from "@/lib/hooks/use-available-bonds";
 
 type SortField = "maturity" | "liquidity" | "currentPrice";
 type SortOrder = "asc" | "desc";
@@ -19,7 +19,9 @@ export default function MarketPage() {
   const [sortField, setSortField] = useState<SortField>("maturity");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  const sortedBonds = [...MOCK_BONDS].sort((a, b) => {
+  const { bonds } = useAvailableBonds();
+
+  const sortedBonds = [...bonds].sort((a, b) => {
     if (sortField === "maturity") {
       return sortOrder === "asc"
         ? a.maturity - b.maturity

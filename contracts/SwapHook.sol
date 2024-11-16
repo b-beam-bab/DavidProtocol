@@ -15,6 +15,7 @@ import {LogExpMath} from "./libraries/LogExpMath.sol";
 
 contract SwapHook is BaseHook {
     using LogExpMath for int256;
+
     struct HookState {
         int256 totalZct; // 제로쿠폰본드 양
         int256 totalEth; // 이더양
@@ -108,11 +109,11 @@ contract SwapHook is BaseHook {
     ) internal pure returns (int256 rateAnchor) {
         int256 newExchangeRate = _getExchangeRateFromImpliedRate(lastLnImpliedRate, timeToExpiry);
 
-        int256 proportion = totalPt * 1e18 / (totalPt + totalAsset);
+        int256 proportion = (totalPt * 1e18) / (totalPt + totalAsset);
 
         int256 lnProportion = _logProportion(proportion);
 
-        rateAnchor = newExchangeRate - lnProportion * 1e18 / rateScalar;
+        rateAnchor = newExchangeRate - (lnProportion * 1e18) / rateScalar;
     }
 
     // 암묵적 이자율을 계산해주는 함수
@@ -149,8 +150,8 @@ contract SwapHook is BaseHook {
     }
 
     /////////////////////////////////////////////// SCALAR
-    function _getRateScalar(HookState memory state, uint256 timeToExpiry) internal pure returns (int256 rateScalar) {
-        rateScalar = (state.scalarRoot * IMPLIED_RATE_TIME) / timeToExpiry);
+    function _getRateScalar(int256 scalarRoot, uint256 timeToExpiry) internal pure returns (int256 rateScalar) {
+        rateScalar = (scalarRoot * IMPLIED_RATE_TIME) / timeToExpiry;
         require(rateScalar > 0, "rateScalar must be positive");
     }
 
@@ -169,13 +170,13 @@ contract SwapHook is BaseHook {
     ) internal pure returns (int256 exchangeRate) {
         int256 numerator = totalZct - netZctToAccount;
 
-        int256 proportion = (numerator * 1e18 / (totalZct + totalEth));
+        int256 proportion = ((numerator * 1e18) / (totalZct + totalEth));
 
         require(proportion <= MAX_MARKET_PROPORTION);
 
         int256 lnProportion = _logProportion(proportion);
 
-        exchangeRate = (lnProportion * 1e18 / rateScalar) + rateAnchor;
+        exchangeRate = ((lnProportion * 1e18) / rateScalar) + rateAnchor;
         require(exchangeRate >= 1e18);
     }
 }

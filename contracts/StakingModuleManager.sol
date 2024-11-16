@@ -4,11 +4,12 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/utils/Create2.sol";
 
 import "./interfaces/IDepositContract.sol";
+import "./interfaces/IStakingModuleManager.sol";
 import "./interfaces/IStakingModule.sol";
 
 import "./StakingModule.sol";
 
-contract StakingModuleManager {
+contract StakingModuleManager is IStakingModuleManager {
     IDepositContract public immutable depositContract;
     mapping(bytes32 => IStakingModule) public stakingModules;
 

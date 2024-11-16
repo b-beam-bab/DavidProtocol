@@ -4,9 +4,10 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/utils/Address.sol";
 
 import "./interfaces/IDepositContract.sol";
+import "./interfaces/IStakingModule.sol";
 import "./interfaces/IStakingModuleManager.sol";
 
-contract StakingModule {
+contract StakingModule is IStakingModule {
     IDepositContract public immutable depositContract;
     IStakingModuleManager public immutable stakingModuleManager;
     address public immutable owner;

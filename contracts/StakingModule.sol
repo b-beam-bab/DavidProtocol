@@ -40,21 +40,6 @@ contract StakingModule {
         _;
     }
 
-    // function stake(
-    //     bytes calldata pubkey,
-    //     bytes calldata signature,
-    //     bytes32 depositDataRoot
-    // ) external payable onlyStakingModuleManager {
-    //     require(msg.value == 32 ether, "Invalid staking amount");
-
-    //     bytes memory wc = _getWithdrawalCredentials();
-    //     depositContract.deposit{value: 32 ether}(
-    //         pubkey,
-    //         wc,
-    //         signature,
-    //         depositDataRoot
-    //     );
-    // }
     function stake(
         bytes calldata pubkey,
         bytes calldata signature,

@@ -12,11 +12,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  Tooltip,
+  Tooltip as UITooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { BondPriceChart } from "@/components/chart/bond-price-chart";
 
 type Props = {
   params: {
@@ -62,11 +63,7 @@ export default function BondDetail({ params }: Props) {
               <CardTitle>Bond Price Chart</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[400px] rounded-lg border-2 border-dashed border-muted flex items-center justify-center">
-                <p className="text-muted-foreground">
-                  Chart will be implemented later
-                </p>
-              </div>
+              <BondPriceChart currentPrice={bondInfo.currentPrice} />
             </CardContent>
           </Card>
 
@@ -144,14 +141,14 @@ export default function BondDetail({ params }: Props) {
           <CardTitle className="flex items-center gap-2">
             Additional Information
             <TooltipProvider>
-              <Tooltip>
+              <UITooltip>
                 <TooltipTrigger>
                   <InfoIcon className="h-4 w-4 text-muted-foreground" />
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Important details about this bond and its terms.</p>
                 </TooltipContent>
-              </Tooltip>
+              </UITooltip>
             </TooltipProvider>
           </CardTitle>
         </CardHeader>

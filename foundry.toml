@@ -10,3 +10,6 @@ fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}]
 solc_version = "0.8.26"
 evm_version = "cancun"
 viaIR = true
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"

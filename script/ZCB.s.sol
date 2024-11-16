@@ -5,9 +5,10 @@ import "forge-std/console.sol";
 
 import {Script} from "forge-std/Script.sol";
 
+import {IDepositContract} from "../contracts/interfaces/IDepositContract.sol";
 import {FakeOracle} from "../contracts/FakeOracle.sol";
 import {StakingModuleManager} from "../contracts/StakingModuleManager.sol";
-import {ZeroCouponBond} from "../contracts/StakingModuleManager.sol";
+import {ZeroCouponBond} from "../contracts/ZeroCouponBond.sol";
 
 contract DeployZCB is Script {
     uint256 constant FAKE_AVERAGE_YIELD = 3 * 1e18;
@@ -35,7 +36,7 @@ contract DeployZCB is Script {
 
         ZeroCouponBond zeroCouponBond = new ZeroCouponBond(
             stakeModuleManager,
-            MARGIN_RATIO,
+            DEFAULT_MARGIN_RATIO,
             DEFAULT_ZCB_DURATION
         );
         console.log(

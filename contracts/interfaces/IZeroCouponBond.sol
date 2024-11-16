@@ -11,7 +11,4 @@ interface IZeroCouponBond is IERC20 {
         address validator,
         bytes calldata proof
     ) external;
-    function getFaceValue() external view returns (uint256);
-    function getMaturityDate() external view returns (uint256);
-    function getIssuerBalance(address issuer) external view returns (uint256);
 }

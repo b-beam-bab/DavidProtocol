@@ -1,3 +1,5 @@
+"use client";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useBondBalance } from "@/lib/hooks/use-bond-balance";
 import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
@@ -6,7 +8,7 @@ import { Wallet } from "lucide-react";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 
-export const BalanceChartCard = async () => {
+export const BalanceChartCard = () => {
   const { address } = useAccount();
   const { data: price, isLoading } = useEthPrice();
   const { balance: depositInGwei } = useDepositAmount(address);

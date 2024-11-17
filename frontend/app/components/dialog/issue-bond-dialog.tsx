@@ -85,12 +85,12 @@ export function IssueBondDialog() {
     setTxState("idle");
   };
 
-  const handleClose = () => {
-    setIsOpen(false);
-    resetDialog();
-  };
+  // const handleClose = () => {
+  //   setIsOpen(false);
+  //   resetDialog();
+  // };
 
-  const processTransaction = async (e: any) => {
+  const processTransaction = async (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
 
     setTxState("loading");

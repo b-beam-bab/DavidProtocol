@@ -2,7 +2,6 @@
 
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { BalanceChartCard } from "@/components/card/balance-chart.card";
-import { Suspense } from "react";
 import { BondCard } from "@/components/card/bond-card";
 import { useAccount } from "wagmi";
 import { useMyBondList } from "@/lib/hooks/use-my-bond-lists";
@@ -17,9 +16,7 @@ export default function Investor() {
 
       {/* Top Section: Chart and Balance */}
       <div className="mb-8 grid gap-4">
-        <Suspense>
-          <BalanceChartCard />
-        </Suspense>
+        <BalanceChartCard />
       </div>
 
       {/* Bonds Section */}

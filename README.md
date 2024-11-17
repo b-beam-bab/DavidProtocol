@@ -1,6 +1,6 @@
 # DavidProtocol
 
-This is a project made in ETHGlobal Bangkok 2024. The frontend code is here https://github.com/b-beam-bab/frontend.
+This is a project made in ETHGlobal Bangkok 2024
 
 ## Description
 

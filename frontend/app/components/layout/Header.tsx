@@ -26,7 +26,7 @@ export default function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <nav className="flex h-20 items-center px-4 md:px-6">
         <Link className="flex items-center justify-center" href="/">
-          <span className="ml-2 text-2xl font-bold">EthBond</span>
+          <span className="ml-2 text-2xl font-bold">David</span>
         </Link>
 
         <div className="ml-10 hidden md:flex md:gap-x-6">
@@ -74,7 +74,7 @@ export default function Header() {
         ) : (
           <nav className="ml-auto">
             <Link href="/market">
-              <Button>
+              <Button className="bg-[#B45BA9] hover:bg-[#B45BA9]/80">
                 Launch App
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

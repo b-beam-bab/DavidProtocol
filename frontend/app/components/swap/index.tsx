@@ -28,7 +28,7 @@ export function SwapUI({ bond }: SwapUIProps) {
   const [buyAmount, setBuyAmount] = useState("");
   const [isSelling, setIsSelling] = useState(true);
 
-  const bondName = `${bond.name}_${formatDateToYYYYMMDD(bond.maturityDate)}`;
+  const bondName = `${bond.name}_${formatDateToYYYYMMDD(bond.maturity)}`;
 
   const handleSwap = () => {
     // Implement actual swap logic here

@@ -143,9 +143,17 @@ export function IssueBondDialog() {
               <SuccessIcon />
             </div>
           </div>
-          <p className="text-center">
-            Successfully issued bond for {amount} ETH
-          </p>
+          <div className="text-center space-y-2">
+            <p> Successfully issued bond for {amount} ETH</p>
+            <a
+              href={`https://eth-sepolia.blockscout.com/tx/${hash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline text-sm"
+            >
+              View on Block Explorer
+            </a>
+          </div>
         </div>
       );
     }

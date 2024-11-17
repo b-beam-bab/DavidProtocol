@@ -47,7 +47,7 @@ export function AddDepositDialog() {
         setIsOpen(false);
         setAmount("");
         setTxState("idle");
-      }, 2000); // Added explicit timeout
+      }, 5000); // Added explicit timeout
       return () => clearTimeout(timer); // Cleanup timeout
     } else if (error) {
       setTxState("error");
@@ -93,9 +93,17 @@ export function AddDepositDialog() {
                 <SuccessIcon />
               </div>
             </div>
-            <p className="text-center">
-              Successfully processed deposit for {amount} ETH
-            </p>
+            <div className="text-center space-y-2">
+              <p>Successfully processed deposit for {amount} ETH</p>
+              <a
+                href={`https://eth-sepolia.blockscout.com/tx/${hash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline text-sm"
+              >
+                View on Block Explorer
+              </a>
+            </div>
           </div>
         );
       case "error":

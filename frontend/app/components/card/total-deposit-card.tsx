@@ -13,11 +13,17 @@ import { useEthPrice } from "@/lib/hooks/use-eth-price";
 import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
 import { useAccount } from "wagmi";
 import { formatEther } from "viem";
+import React from "react";
 
 export const TotalDepositCard = () => {
   const { address } = useAccount();
   const { data: price, isLoading } = useEthPrice();
-  const { balance: depositInGwei } = useDepositAmount(address);
+  const { balance: depositInGwei, refetch: refetchDepositAmount } =
+    useDepositAmount(address);
+
+  React.useEffect(() => {
+    refetchDepositAmount();
+  }, [address, refetchDepositAmount]);
 
   const deposit = formatEther(depositInGwei);
 

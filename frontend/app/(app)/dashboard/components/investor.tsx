@@ -5,10 +5,15 @@ import { BalanceChartCard } from "@/components/card/balance-chart.card";
 import { BondCard } from "@/components/card/bond-card";
 import { useAccount } from "wagmi";
 import { useMyBondList } from "@/lib/hooks/use-my-bond-lists";
+import React from "react";
 
 export default function Investor() {
   const { address } = useAccount();
-  const { myBonds } = useMyBondList(address);
+  const { myBonds, refetch } = useMyBondList(address);
+
+  React.useEffect(() => {
+    refetch();
+  }, [address, refetch]);
 
   return (
     <div className="container mx-auto px-4 py-6 bg-white/90">

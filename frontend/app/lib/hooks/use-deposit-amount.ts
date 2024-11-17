@@ -6,9 +6,10 @@ import {
 } from "wagmi";
 import { abi as smmAbi } from "@/abi/staking-module-manager";
 import { STAKING_MODULE_MANAGER_ADDRESS } from "@/constants/contract";
+import { zeroAddress } from "viem";
 
 export const useStakingModule = (address: `0x${string}` | undefined) => {
-  const { data: simulateData } = useSimulateContract({
+  const { data: simulateData, refetch } = useSimulateContract({
     address: STAKING_MODULE_MANAGER_ADDRESS,
     abi: smmAbi,
     functionName: "getStakingModule",
@@ -43,23 +44,23 @@ export const useStakingModule = (address: `0x${string}` | undefined) => {
     isPending,
     isConfirming,
     isConfirmed,
+    refetch,
   };
 };
 
 export const useDepositAmount = (userAddress: `0x${string}` | undefined) => {
   const { stakingModuleAddress } = useStakingModule(userAddress);
 
-  console.log("Staking module address", stakingModuleAddress);
-
-  const { data: balance } = useBalance({
+  const { data: balance, refetch } = useBalance({
     address: stakingModuleAddress,
     query: {
-      enabled: !!stakingModuleAddress,
+      enabled: !!stakingModuleAddress && stakingModuleAddress !== zeroAddress,
     },
   });
 
   return {
     balance: balance?.value ?? BigInt(0),
     stakingModuleAddress,
+    refetch,
   };
 };

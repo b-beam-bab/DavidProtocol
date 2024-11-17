@@ -19,7 +19,7 @@ export default function MarketPage() {
   const [sortField, setSortField] = useState<SortField>("maturity");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  const { bonds, isPending, error } = useAvailableBonds();
+  const { bonds, isPending } = useAvailableBonds();
 
   const sortedBonds = [...bonds].sort((a, b) => {
     if (sortField === "maturity") {

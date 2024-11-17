@@ -5,14 +5,24 @@ import { useBondBalance } from "@/lib/hooks/use-bond-balance";
 import { useDepositAmount } from "@/lib/hooks/use-deposit-amount";
 import { useEthPrice } from "@/lib/hooks/use-eth-price";
 import { Wallet } from "lucide-react";
+import React from "react";
 import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 
 export const BalanceChartCard = () => {
   const { address } = useAccount();
   const { data: price, isLoading } = useEthPrice();
-  const { balance: depositInGwei } = useDepositAmount(address);
-  const { balance: bondBalanceInGwei } = useBondBalance(address);
+  const { balance: depositInGwei, refetch: refetchDepositAmount } =
+    useDepositAmount(address);
+  const { balance: bondBalanceInGwei, refetch: refetchBondBalance } =
+    useBondBalance(address);
+
+  React.useEffect(() => {
+    refetchDepositAmount();
+  }, [address, refetchDepositAmount]);
+  React.useEffect(() => {
+    refetchBondBalance();
+  }, [address, refetchBondBalance]);
 
   const totalGwei = depositInGwei + (bondBalanceInGwei ?? BigInt(0));
   const totalEth = formatEther(totalGwei);

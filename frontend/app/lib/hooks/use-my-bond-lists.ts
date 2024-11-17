@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { abi as zcpAbi } from "@/abi/zero-coupon-bond";
 import {
   ZERO_COUPON_BOND_ADDRESS_0,
@@ -14,8 +15,9 @@ export const useMyBondList = (
   myBonds: (Bond & { balance: bigint })[];
   isPending: boolean;
   error: Error | null;
+  refetch: () => Promise<any>;
 } => {
-  const { data, error, isPending } = useReadContracts({
+  const { data, error, isPending, refetch } = useReadContracts({
     contracts: [
       {
         address: ZERO_COUPON_BOND_ADDRESS_0,
@@ -54,5 +56,6 @@ export const useMyBondList = (
     myBonds,
     isPending,
     error,
+    refetch,
   };
 };

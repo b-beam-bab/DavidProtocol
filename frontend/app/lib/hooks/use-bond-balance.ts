@@ -7,7 +7,7 @@ import {
 import { useReadContracts } from "wagmi";
 
 export const useBondBalance = (address: `0x${string}` | undefined) => {
-  const { data, error, isPending } = useReadContracts({
+  const { data, error, isPending, refetch } = useReadContracts({
     contracts: [
       {
         address: ZERO_COUPON_BOND_ADDRESS_0,
@@ -42,5 +42,6 @@ export const useBondBalance = (address: `0x${string}` | undefined) => {
     balance: sumBalance,
     isPending,
     error,
+    refetch,
   };
 };

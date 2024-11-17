@@ -10,10 +10,15 @@ import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { ScrollBar } from "@/components/ui/scroll-area";
 import { useMyBondList } from "@/lib/hooks/use-my-bond-lists";
 import { useAccount } from "wagmi";
+import React from "react";
 
 export default function ValidatorPage() {
   const { address } = useAccount();
-  const { myBonds } = useMyBondList(address);
+  const { myBonds, refetch } = useMyBondList(address);
+
+  React.useEffect(() => {
+    refetch();
+  }, [address, refetch]);
 
   return (
     <div className="pt-4">

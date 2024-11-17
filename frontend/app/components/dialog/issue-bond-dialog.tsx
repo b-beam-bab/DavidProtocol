@@ -68,9 +68,24 @@ export function IssueBondDialog() {
   }, [isPending, isConfirming, isConfirmed, error]);
 
   const { address } = useAccount();
-  const { stakingModuleAddress } = useStakingModule(address);
-  const { balance: depositInGwei } = useDepositAmount(address);
-  const { balance: bondBalanceInGwei } = useBondBalance(address);
+  const { stakingModuleAddress, refetch: refetchStakingModule } =
+    useStakingModule(address);
+  const { balance: depositInGwei, refetch: refetchDepositAmount } =
+    useDepositAmount(address);
+  const { balance: bondBalanceInGwei, refetch: refetchBondBalance } =
+    useBondBalance(address);
+
+  React.useEffect(() => {
+    refetchStakingModule();
+  }, [address, refetchStakingModule]);
+
+  React.useEffect(() => {
+    refetchDepositAmount();
+  }, [address, refetchDepositAmount]);
+
+  React.useEffect(() => {
+    refetchBondBalance();
+  }, [address, refetchBondBalance]);
 
   const totalGwei = depositInGwei - (bondBalanceInGwei ?? BigInt(0));
   const availableDeposit = Number(formatEther(totalGwei));

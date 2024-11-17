@@ -11,18 +11,23 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAccount } from "wagmi";
+import { useAccount, useBalance } from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import Image from "next/image";
 import { Bond } from "@/lib/types";
 import { formatDateToYYYYMMDD } from "@/lib/utils";
+import { formatEther } from "viem";
 
 type SwapUIProps = {
   bond: Bond;
 };
 
 export function SwapUI({ bond }: SwapUIProps) {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
+
+  const { data: balance, isPending } = useBalance({
+    address,
+  });
 
   const [sellAmount, setSellAmount] = useState("");
   const [buyAmount, setBuyAmount] = useState("");
@@ -98,12 +103,19 @@ export function SwapUI({ bond }: SwapUIProps) {
             </div>
           </div>
           <div className="mt-2 flex justify-between text-sm text-slate-400">
-            <span>Balance: 0</span>
+            <span>
+              Balance: {isPending ? "Loading..." : formatEther(balance!.value)}
+            </span>
             <Button
               variant="link"
               className="p-0 h-auto text-blue-400 hover:text-blue-300"
               onClick={() => {
-                /* Implement max amount logic */
+                setSellAmount(formatEther(balance!.value));
+                setBuyAmount(
+                  (
+                    parseFloat(formatEther(balance!.value)) / bond.price
+                  ).toFixed(6)
+                );
               }}
             >
               Max

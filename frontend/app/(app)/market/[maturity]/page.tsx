@@ -78,7 +78,9 @@ export default function BondDetail({ params }: Props) {
                   <dt className="text-sm font-medium text-muted-foreground">
                     Current Price
                   </dt>
-                  <dd className="text-lg font-semibold">{bond.price} ETH</dd>
+                  <dd className="text-lg font-semibold">
+                    {bond.price.toFixed(2)} ETH
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-muted-foreground">

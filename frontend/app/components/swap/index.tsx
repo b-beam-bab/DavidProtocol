@@ -11,12 +11,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAccount, useBalance } from "wagmi";
+import {
+  useAccount,
+  useBalance,
+  usePublicClient,
+  useWalletClient,
+} from "wagmi";
 import { ConnectWallet, Wallet } from "@coinbase/onchainkit/wallet";
 import Image from "next/image";
 import { Bond } from "@/lib/types";
 import { formatDateToYYYYMMDD } from "@/lib/utils";
-import { formatEther } from "viem";
+import { erc20Abi, formatEther } from "viem";
+import { SWAP_ADDRESS } from "@/constants/contract";
+import { useMyBondList } from "@/lib/hooks/use-my-bond-lists";
 
 type SwapUIProps = {
   bond: Bond;
@@ -24,10 +31,25 @@ type SwapUIProps = {
 
 export function SwapUI({ bond }: SwapUIProps) {
   const { address, isConnected } = useAccount();
-
   const { data: balance, isPending } = useBalance({
     address,
   });
+  const {
+    myBonds,
+    isPending: isMyBondsPending,
+    refetch,
+  } = useMyBondList(address);
+
+  React.useEffect(() => {
+    refetch();
+  }, [address, refetch]);
+
+  const correspondingBond = myBonds.find(
+    (myBond) => myBond.maturity === bond.maturity
+  );
+
+  const { data: walletClient } = useWalletClient();
+  const publicClient = usePublicClient();
 
   const [sellAmount, setSellAmount] = useState("");
   const [buyAmount, setBuyAmount] = useState("");
@@ -35,9 +57,45 @@ export function SwapUI({ bond }: SwapUIProps) {
 
   const bondName = `${bond.name}_${formatDateToYYYYMMDD(bond.maturity)}`;
 
-  const handleSwap = () => {
-    // Implement actual swap logic here
-    console.log("Swap executed");
+  const handleSwap = async () => {
+    if (!walletClient || !address || !publicClient) return;
+
+    console.log("Swapping", sellAmount, buyAmount, bondName);
+
+    try {
+      // First approve the token spend
+      const tokenContract = {
+        address: bond.address as `0x${string}`,
+        abi: erc20Abi,
+      };
+
+      const amountToApprove = BigInt(
+        "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+      );
+
+      // Send approval transaction
+      const approvalHash = await walletClient.writeContract({
+        ...tokenContract,
+        functionName: "approve",
+        args: [SWAP_ADDRESS, amountToApprove],
+      });
+
+      // Wait for approval to be mined
+      await publicClient.waitForTransactionReceipt({ hash: approvalHash });
+      console.log("Approval confirmed:", approvalHash);
+
+      // Proceed with swap transaction
+      const hash = await walletClient.sendTransaction({
+        to: SWAP_ADDRESS,
+        data: "0x2229d0b40000000000000000000000000000000000000000000000000000000000000000000000000000000000000000bd9dc29b3167fa6b8138c1038265e5dd10a29b2d0000000000000000000000000000000000000000000000000000000000000bb8000000000000000000000000000000000000000000000000000000000000003c0000000000000000000000008fd7be00fb9990016080f2829cd1bc4db88208880000000000000000000000000000000000000000000000000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffc72815b398000000000000000000000000000fffd8963efd1fc6a506488495d951d5263988d250000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001600000000000000000000000000000000000000000000000000000000000000000",
+      });
+
+      console.log(hash);
+
+      // ... rest of the swap code ...
+    } catch (error) {
+      console.error("Transaction failed:", error);
+    }
   };
 
   const handleFlipCurrencies = () => {
@@ -103,9 +161,20 @@ export function SwapUI({ bond }: SwapUIProps) {
             </div>
           </div>
           <div className="mt-2 flex justify-between text-sm text-slate-400">
-            <span>
-              Balance: {isPending ? "Loading..." : formatEther(balance!.value)}
-            </span>
+            {isSelling ? (
+              <span>
+                Balance:
+                {isPending ? "Loading..." : formatEther(balance!.value)}
+              </span>
+            ) : (
+              <span>
+                Balance:
+                {isMyBondsPending
+                  ? "Loading..."
+                  : formatEther(correspondingBond?.balance ?? BigInt(0))}
+              </span>
+            )}
+
             <Button
               variant="link"
               className="p-0 h-auto text-blue-400 hover:text-blue-300"

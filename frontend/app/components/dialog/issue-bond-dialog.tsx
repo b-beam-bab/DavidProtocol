@@ -78,12 +78,12 @@ export function IssueBondDialog() {
   const { bonds }: { bonds: Bond[] } = useAvailableBonds();
   const sortedBonds = [...bonds].sort((a, b) => a.maturity - b.maturity);
 
-  const resetDialog = () => {
-    setStep(1);
-    setSelectedBond(null);
-    setAmount(0);
-    setTxState("idle");
-  };
+  // const resetDialog = () => {
+  //   setStep(1);
+  //   setSelectedBond(null);
+  //   setAmount(0);
+  //   setTxState("idle");
+  // };
 
   // const handleClose = () => {
   //   setIsOpen(false);

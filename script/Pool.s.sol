@@ -53,11 +53,12 @@ contract Deploy is Script, Config {
             0x8C4BcBE6b9eF47855f97E675296FA3F6fafa5F1A
         );
 
-        address hook = 0xdC94522E5f454C5E3B7363a83B8daE9682Cb8888;
+        address hook = 0x8fd7be00fb9990016080F2829Cd1Bc4db8820888;
+        address zcb = 0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D;
 
         PoolKey memory poolKey = PoolKey(
             CurrencyLibrary.ADDRESS_ZERO,
-            Currency.wrap(address(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D)), // zcb2
+            Currency.wrap(address(zcb)), // zcb1
             3000,
             tickSpacing,
             IHooks(hook)
@@ -69,37 +70,28 @@ contract Deploy is Script, Config {
             600000000000000,
             30,
             1,
-            block.timestamp + 10000000,
-            address(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D)
+            block.timestamp + 90000000,
+            zcb
         );
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).approve(
-            hook,
-            type(uint256).max
-        );
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).approve(
+        IERC20(zcb).approve(hook, type(uint256).max);
+        IERC20(zcb).approve(
             0x1B1C77B606d13b09C84d1c7394B96b147bC03147,
             type(uint256).max
         );
 
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).transfer(
+        IERC20(zcb).transfer(
             0x1B1C77B606d13b09C84d1c7394B96b147bC03147,
             10 ether
         );
 
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).transfer(
-            address(manager),
-            10 ether
-        );
+        IERC20(zcb).transfer(address(manager), 10 ether);
 
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).transfer(
+        IERC20(zcb).transfer(
             0xe49d2815C231826caB58017e214Bed19fE1c2dD4,
             10 ether
         );
 
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).transfer(
-            address(hook),
-            1 ether
-        );
+        IERC20(zcb).transfer(address(hook), 1 ether);
 
         SwapHook(hook).add{value: 0.01 ether}(
             poolKey,
@@ -111,10 +103,7 @@ contract Deploy is Script, Config {
         PoolSwapTest swapRouter = PoolSwapTest(
             0xe49d2815C231826caB58017e214Bed19fE1c2dD4
         );
-        IERC20(0xbd9DC29B3167fA6b8138C1038265E5dd10a29B2D).approve(
-            address(swapRouter),
-            type(uint256).max
-        );
+        IERC20(zcb).approve(address(swapRouter), type(uint256).max);
 
         // swap some tokens
         bool zeroForOne = false;

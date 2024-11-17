@@ -89,8 +89,96 @@ contract SwapHook is BaseHook {
         _zcts[zct] = true;
     }
 
-    function isZct(Currency currency) public returns (bool) {
+    function isZct(Currency currency) public view returns (bool) {
         return _zcts[Currency.unwrap(currency)];
+    }
+
+    function estimate(
+        PoolKey calldata key,
+        IPoolManager.SwapParams calldata swapParams
+    ) external view returns (uint256 amount) {
+        PoolId id = key.toId();
+        HookState memory hs = _pools[id];
+        bool exactInput = swapParams.amountSpecified < 0;
+        if (isZct(key.currency0)) {
+            if (swapParams.zeroForOne) {
+                require(exactInput, "a");
+            } else {
+                require(!exactInput, "b");
+            }
+        } else {
+            if (swapParams.zeroForOne) {
+                require(!exactInput, "c");
+            } else {
+                require(exactInput, "d");
+            }
+        }
+
+        (Currency zct, Currency asset) = isZct(key.currency0)
+            ? (key.currency0, key.currency1)
+            : (key.currency1, key.currency0);
+        int256 specifiedAmount = exactInput
+            ? -swapParams.amountSpecified
+            : swapParams.amountSpecified;
+        int256 unspecifiedAmount;
+        int256 fee;
+        if (exactInput) {
+            (unspecifiedAmount, fee) = _swap2(
+                hs,
+                -specifiedAmount,
+                block.timestamp
+            );
+        } else {
+            (unspecifiedAmount, fee) = _swap2(
+                hs,
+                specifiedAmount,
+                block.timestamp
+            );
+        }
+        return uint256(unspecifiedAmount);
+    }
+
+    function _swap2(
+        HookState memory state,
+        int256 amount,
+        uint256 blockTime
+    ) internal view returns (int256 netAssetToAccount, int256 fee) {
+        uint256 timeToExpiry = state.expiry - blockTime; // 만기까지 남은 시간
+        int256 rateScalar = _getRateScalar(state.scalarRoot, timeToExpiry); // rateScalar 계산
+        // uint256 ay = oracle.averageYield();
+        // if (state.latestAverageYield != ay) {
+        //     state.latestAverageYield = ay;
+        // }
+        int256 rateAnchor = _getRateAnchor(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            state.lastLnImpliedRate,
+            timeToExpiry
+        );
+        int256 feeRate = _getExchangeRateFromImpliedRate(
+            state.lnFeeRateRoot,
+            timeToExpiry
+        );
+        int256 exchangeRate = _getExchangeRate(
+            state.totalZct,
+            state.totalAsset,
+            rateScalar,
+            rateAnchor,
+            amount
+        );
+        int256 assetToAccount = -((amount * 1e18) / exchangeRate);
+        // calculate fee
+        if (amount > 0) {
+            // case of buy zct
+            require(((exchangeRate * 1e18) / feeRate) >= 1e18);
+            fee = (assetToAccount * (1e18 - feeRate)) / 1e18;
+        } else {
+            // case of sell zct
+            fee = -((assetToAccount * (1e18 - feeRate)) / feeRate);
+        }
+
+        netAssetToAccount = assetToAccount - fee;
     }
 
     function beforeAddLiquidity(
@@ -246,6 +334,27 @@ contract SwapHook is BaseHook {
         poolManager.take(asset, address(this), uint256(assetAmount));
     }
 
+    function add(
+        PoolKey calldata key,
+        uint256 zctAmountDesired,
+        uint256 assetAmountDesired,
+        address sender
+    ) external payable returns (bytes memory) {
+        PoolId id = key.toId();
+        HookState storage hs = _pools[id];
+
+        (
+            int256 liquidity,
+            int256 zctAmount,
+            int256 assetAmount
+        ) = _addLiquidity(
+                hs,
+                int256(zctAmountDesired),
+                int256(assetAmountDesired),
+                block.timestamp
+            );
+    }
+
     function handleRemoveLiquidity(
         PoolKey calldata key,
         uint256 amount,
@@ -377,7 +486,7 @@ contract SwapHook is BaseHook {
         int256 rateScalar,
         uint256 lastLnImpliedRate,
         uint256 timeToExpiry
-    ) internal returns (int256 rateAnchor) {
+    ) internal view returns (int256 rateAnchor) {
         int256 newExchangeRate = _getExchangeRateFromImpliedRate(
             lastLnImpliedRate,
             timeToExpiry
@@ -412,7 +521,7 @@ contract SwapHook is BaseHook {
     function _getExchangeRateFromImpliedRate(
         uint256 lnImpliedRate,
         uint256 timeToExpiry
-    ) internal returns (int256 exchangeRate) {
+    ) internal view returns (int256 exchangeRate) {
         uint256 rt = (lnImpliedRate * timeToExpiry) / IMPLIED_RATE_TIME;
         exchangeRate = LogExpMath.exp(int256(rt));
     }
@@ -420,7 +529,7 @@ contract SwapHook is BaseHook {
     function _getRateScalar(
         int256 scalarRoot,
         uint256 timeToExpiry
-    ) internal returns (int256 rateScalar) {
+    ) internal view returns (int256 rateScalar) {
         rateScalar =
             (scalarRoot * int256(IMPLIED_RATE_TIME)) /
             int256(timeToExpiry);
@@ -433,7 +542,7 @@ contract SwapHook is BaseHook {
         int256 rateScalar,
         int256 rateAnchor,
         int256 netZctToAccount
-    ) internal returns (int256 exchangeRate) {
+    ) internal view returns (int256 exchangeRate) {
         int256 numerator = totalZct - netZctToAccount;
         int256 proportion = ((numerator * 1e18) / (totalZct + totalAsset));
         require(proportion <= MAX_MARKET_PROPORTION);
@@ -443,7 +552,9 @@ contract SwapHook is BaseHook {
         require(exchangeRate >= 1e18);
     }
 
-    function _logProportion(int256 proportion) internal returns (int256 res) {
+    function _logProportion(
+        int256 proportion
+    ) internal view returns (int256 res) {
         require(proportion != 1e18);
         int256 logitP = (proportion * 1e18) / (1e18 - proportion);
 

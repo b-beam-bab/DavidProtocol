@@ -2,9 +2,9 @@
 
 This is a project made in ETHGlobal Bangkok 2024. The frontend code is here https://github.com/b-beam-bab/frontend.
 
-**Template repository for getting started quickly with Foundry projects**
+## Description
 
-![Github Actions](https://github.com/foundry-rs/forge-template/workflows/CI/badge.svg)
+The David Protocol empowers small validators by enabling them to use the deposited ETH as collateral to gain and deposit additional ETH from a liquidity pool in a permissionless manner.
 
 ## Getting Started
 

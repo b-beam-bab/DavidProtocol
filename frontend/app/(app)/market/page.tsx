@@ -19,7 +19,7 @@ export default function MarketPage() {
   const [sortField, setSortField] = useState<SortField>("maturity");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
 
-  const { bonds } = useAvailableBonds();
+  const { bonds, isPending, error } = useAvailableBonds();
 
   const sortedBonds = [...bonds].sort((a, b) => {
     if (sortField === "maturity") {
@@ -74,9 +74,13 @@ export default function MarketPage() {
                 onSort={handleSort}
               />
               <TableBody>
-                {sortedBonds.map((bond) => (
-                  <BondTableRow key={bond.maturity} bond={bond} />
-                ))}
+                {isPending ? (
+                  <p>Loading...</p>
+                ) : (
+                  sortedBonds.map((bond) => (
+                    <BondTableRow key={Math.random()} bond={bond} />
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>

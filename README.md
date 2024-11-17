@@ -1,4 +1,6 @@
-# <h1 align="center"> Forge Template </h1>
+# DavidProtocol
+
+This is a project made in ETHGlobal Bangkok 2024. The frontend code is here https://github.com/b-beam-bab/frontend.
 
 **Template repository for getting started quickly with Foundry projects**
 

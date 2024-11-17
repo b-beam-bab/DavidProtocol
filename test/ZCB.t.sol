@@ -24,21 +24,48 @@ contract ZCBTest is Test {
     function testLeverageStaking() public {
         vm.deal(addr0, 100 ether);
 
+        console.logUint(addr0.balance);
+        uint256 amountToIssue = 1 ether;
+        uint256 averageDiscount = 45;
+        for (uint256 i = 0; i < 10; ++i) {
+            amountToIssue = bondCycle(
+                addr0,
+                addr1,
+                amountToIssue,
+                averageDiscount
+            );
+            vm.deal(addr0, addr0.balance + amountToIssue);
+            console.logUint(addr0.balance);
+        }
+    }
+
+    function testFakeMint() public {
+        console.logUint(zeroCouponBond.totalSupply());
+        zeroCouponBond.fakeMint(address(1), 100 ether);
+        console.logUint(zeroCouponBond.totalSupply());
+    }
+
+    function bondCycle(
+        address issuer,
+        address invester,
+        uint256 amount,
+        uint256 averageDiscount
+    ) internal returns (uint256) {
         bytes memory pubkey = bytes("");
         bytes memory signature = bytes("");
         bytes32 depositDataRoot = bytes32("");
 
         // 1. Create Staking Module
-        vm.prank(addr0);
+        vm.prank(issuer);
         stakingModuleManager.stake{value: 1 ether}(
             pubkey,
             signature,
             depositDataRoot
         );
 
-        vm.prank(addr0);
+        vm.prank(issuer);
         address stakingModuleAddr = stakingModuleManager.getStakingModule(
-            addr0,
+            issuer,
             pubkey
         );
         IStakingModule stakingModule = IStakingModule(stakingModuleAddr);
@@ -48,26 +75,20 @@ contract ZCBTest is Test {
         zeroCouponBond.setMaturity(1e5);
         console.logUint(zeroCouponBond.maturity());
 
-        vm.prank(addr0);
+        vm.prank(issuer);
         stakingModule.mintBond(zeroCouponBond, 1 ether);
 
-        uint256 balanceOfAddr0 = zeroCouponBond.balanceOf(addr0);
-        console.logUint(balanceOfAddr0);
+        uint256 balanceOfIssuer = zeroCouponBond.balanceOf(issuer);
+        console.logUint(balanceOfIssuer);
 
-        vm.prank(addr0);
-        zeroCouponBond.transfer(addr1, balanceOfAddr0);
+        vm.prank(issuer);
+        zeroCouponBond.transfer(addr1, balanceOfIssuer);
         uint256 balanceOfAddr1 = zeroCouponBond.balanceOf(addr1);
         console.logUint(balanceOfAddr1);
 
-        uint256 valueOfBond = (balanceOfAddr1 * 97) / 100;
-        console.logUint(addr0.balance);
-        vm.deal(addr0, addr0.balance + valueOfBond);
-        console.logUint(addr0.balance);
-    }
+        uint256 valueOfBond = (balanceOfAddr1 * (1000 - averageDiscount)) /
+            1000;
 
-    function testFakeMint() public {
-        console.logUint(zeroCouponBond.totalSupply());
-        zeroCouponBond.fakeMint(address(1), 100 ether);
-        console.logUint(zeroCouponBond.totalSupply());
+        return valueOfBond;
     }
 }
